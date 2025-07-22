@@ -25,8 +25,15 @@ export default function TopicsPage() {
 
   const fetchTopics = async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('topics').select('*').order('topic_created_at', { ascending: false })
-    if (data) setTopics(data)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('*')
+        .eq('topic_user_id', user.id)
+        .order('topic_created_at', { ascending: false })
+      if (data) setTopics(data)
+    }
     setLoading(false)
   }
 
@@ -38,9 +45,16 @@ export default function TopicsPage() {
       return
     }
     setAddLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setAddError('로그인이 필요합니다.')
+      setAddLoading(false)
+      return
+    }
     const { error } = await supabase.from('topics').insert({
       topic_name: newTopicName,
-      topic_description: newTopicDesc
+      topic_description: newTopicDesc,
+      topic_user_id: user.id
     })
     setAddLoading(false)
     if (error) {
