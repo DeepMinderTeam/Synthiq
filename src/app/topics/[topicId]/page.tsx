@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import PdfUpload from '@/components/PdfUpload'
-import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import PdfUploadModal from '@/components/PdfUploadModal'
+import { ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function TopicPage() {
@@ -12,6 +12,7 @@ export default function TopicPage() {
   const { user, loading } = useAuth()
   const topicId = params.topicId as string
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // 인증 상태 확인
   useEffect(() => {
@@ -63,10 +64,10 @@ export default function TopicPage() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              논문 업로드
+              주제 관리
             </h1>
             <p className="text-gray-600">
-              주제 ID: {topicId}에 PDF 논문을 업로드하세요.
+              주제 ID: {topicId}의 논문들을 관리하세요.
             </p>
           </div>
 
@@ -90,9 +91,22 @@ export default function TopicPage() {
             </div>
           )}
 
-          {/* PDF 업로드 컴포넌트 */}
-          <PdfUpload
+          {/* 논문 추가 버튼 */}
+          <div className="text-center">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              논문 추가하기
+            </button>
+          </div>
+
+          {/* PDF 업로드 모달 */}
+          <PdfUploadModal
             topicId={topicId}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
             onUploadSuccess={handleUploadSuccess}
             onUploadError={handleUploadError}
           />
