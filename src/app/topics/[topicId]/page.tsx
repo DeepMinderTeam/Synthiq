@@ -144,9 +144,9 @@ export default function TopicPage() {
           )}
 
           {/* 📊 그래프 영역 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-100 rounded-lg mb-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-100 rounded-lg mb-8"> */}
             {/* ✅ 막대그래프: 월별 학습 시간 */}
-            <div className="bg-white p-4 rounded shadow flex flex-col items-center">
+            {/* <div className="bg-white p-4 rounded shadow flex flex-col items-center">
               <h2 className="font-bold mb-2">월별 학습 시간</h2>
               <BarChart width={300} height={200} data={barData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -155,15 +155,15 @@ export default function TopicPage() {
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="hours" fill="#8884d8" />
-              </BarChart>
+              </BarChart> */}
               {/* 📝 주석 */}
-              <p className="text-xs text-gray-500 mt-2">
+              {/* <p className="text-xs text-gray-500 mt-2">
                 최근 5개월간 학습한 시간을 막대그래프로 표시합니다.
               </p>
-            </div>
+            </div> */}
 
             {/* ✅ 원형그래프: 퀴즈 정답률 */}
-            <div className="bg-white p-4 rounded shadow flex flex-col items-center">
+            {/* <div className="bg-white p-4 rounded shadow flex flex-col items-center">
               <h2 className="font-bold mb-2">퀴즈 정답률</h2>
               <PieChart width={300} height={200}>
                 <Pie
@@ -179,15 +179,15 @@ export default function TopicPage() {
                   ))}
                 </Pie>
                 <Tooltip />
-              </PieChart>
+              </PieChart> */}
               {/* 📝 주석 */}
-              <p className="text-xs text-gray-500 mt-2">
+              {/* <p className="text-xs text-gray-500 mt-2">
                 퀴즈 정답, 오답, 부분정답 비율을 한눈에 볼 수 있습니다.
               </p>
-            </div>
+            </div> */}
 
             {/* ✅ 선형그래프: 주차별 학습 진도율 */}
-            <div className="bg-white p-4 rounded shadow flex flex-col items-center">
+            {/* <div className="bg-white p-4 rounded shadow flex flex-col items-center">
               <h2 className="font-bold mb-2">주차별 학습 진도율</h2>
               <LineChart width={300} height={200} data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -196,13 +196,13 @@ export default function TopicPage() {
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="progress" stroke="#82ca9d" />
-              </LineChart>
+              </LineChart> */}
               {/* 📝 주석 */}
-              <p className="text-xs text-gray-500 mt-2">
+              {/* <p className="text-xs text-gray-500 mt-2">
                 주차별 학습 진행 상황을 선 그래프로 표시합니다.
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* PDF 업로드 모달 */}
           <PdfUploadModal
