@@ -33,10 +33,11 @@ export async function POST(request: NextRequest) {
       .delete()
       .in('summary_content_id', contents.map(c => c.content_id))
 
-    // 각 문단별로 요약 생성 및 저장 (더미 요약)
-    for (const content of contents) {
-      // 실제로는 OpenAI API로 요약 생성
-      const summary = `더미 요약: ${content.content_text.slice(0, 30)}...`
+    // 각 문단별로 요약 생성 및 저장 (더미 요약, 마크다운 형식)
+    for (let i = 0; i < contents.length; i++) {
+      const content = contents[i];
+      // 더미 요약을 마크다운 형식으로 생성
+      const summary = `### 문단 ${i + 1} 요약\n\n- **원문:** ${content.content_text.slice(0, 50)}...\n- **요약:** 이 문단은 논문의 주요 내용을 간략히 설명합니다.\n`;
 
       await supabase
         .from('paper_summaries')

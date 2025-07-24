@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperSummary } from '@/models/paper_summaries'
 import { Paper } from '@/models/paper'
+import ReactMarkdown from 'react-markdown'
 
 interface SummaryStepProps {
   paperId: string
@@ -220,8 +221,8 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
                   {summary.summary_type}
                 </span>
               </div>
-              <div className="text-gray-800 whitespace-pre-wrap">
-                {summary.summary_text}
+              <div className="prose max-w-none">
+                <ReactMarkdown>{summary.summary_text}</ReactMarkdown>
               </div>
             </div>
           ))
