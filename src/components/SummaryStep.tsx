@@ -49,16 +49,11 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">DeepMinder's 요약</h2>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="space-y-2">
-              <div className="font-semibold">{index + 1}.</div>
-              {Array.from({ length: 3 }, (_, i) => (
-                <div key={i} className="h-3 bg-gray-300 rounded animate-pulse" 
-                     style={{ width: `${Math.random() * 80 + 20}%` }} />
-              ))}
-            </div>
+        <div className="h-8 bg-gray-300 rounded animate-pulse" />
+        <div className="space-y-2">
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i} className="h-4 bg-gray-300 rounded animate-pulse" 
+                 style={{ width: `${(i % 3) * 25 + 50}%` }} />
           ))}
         </div>
       </div>

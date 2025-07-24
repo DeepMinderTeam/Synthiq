@@ -5,6 +5,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Paper } from '@/models/paper'
+import dynamic from 'next/dynamic'
+
+// PdfViewer를 동적으로 import하여 SSR 문제 해결
+const PdfViewer = dynamic(() => import('./PdfViewer'), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-gray-300 rounded animate-pulse" />
+})
 
 interface ReadingStepProps {
   paperId: string
@@ -49,7 +56,7 @@ export default function ReadingStep({ paperId }: ReadingStepProps) {
         <div className="space-y-2">
           {Array.from({ length: 16 }, (_, i) => (
             <div key={i} className="h-4 bg-gray-300 rounded animate-pulse" 
-                 style={{ width: `${Math.random() * 60 + 40}%` }} />
+                 style={{ width: `${(i % 3) * 20 + 60}%` }} />
           ))}
         </div>
       </div>
@@ -75,27 +82,26 @@ export default function ReadingStep({ paperId }: ReadingStepProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">{paper.paper_title}</h2>
-      {paper.paper_abstract && (
-        <div className="space-y-2">
-          <h3 className="font-semibold">초록</h3>
-          <div className="text-gray-700 whitespace-pre-wrap">
-            {paper.paper_abstract}
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold mb-4">{paper.paper_title}</h2>
+        {paper.paper_abstract && (
+          <div className="space-y-2 mb-6">
+            <h3 className="font-semibold">초록</h3>
+            <div className="text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
+              {paper.paper_abstract}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      
       {paper.paper_url && (
-        <div className="space-y-2">
-          <h3 className="font-semibold">원문 링크</h3>
-          <a 
-            href={paper.paper_url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline"
-          >
-            논문 보기
-          </a>
+        <div className="space-y-4">
+          <h3 className="font-semibold">논문 PDF</h3>
+          <PdfViewer 
+            filePath={paper.paper_url} 
+            title={paper.paper_title}
+          />
         </div>
       )}
     </div>
