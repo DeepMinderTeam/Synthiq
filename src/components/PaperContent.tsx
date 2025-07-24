@@ -2,17 +2,13 @@
 // Supabase에서 실제 논문 콘텐츠를 가져와서 표시
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { PaperContent as PaperContentType } from '@/models/paper_contents'
 import { Paper } from '@/models/paper'
+import { PaperContent as PaperContentType } from '@/models/paper_contents'
 import dynamic from 'next/dynamic'
 
-// PdfViewer를 동적으로 import하여 SSR 문제 해결
-const PdfViewer = dynamic(() => import('./PdfViewer'), {
-  ssr: false,
-  loading: () => <div className="h-64 bg-gray-300 rounded animate-pulse" />
-})
+const PdfViewer = dynamic(() => import('./pdf/PdfViewer'), { ssr: false })
 
 interface PaperContentProps {
   paperId: string
