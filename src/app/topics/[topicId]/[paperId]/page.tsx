@@ -6,8 +6,7 @@
 import { usePaperStore, type LearningStep } from '@/hooks/paperStore'
 import { Tab } from '@headlessui/react'
 import { CheckIcon } from '@heroicons/react/24/solid'
-import PaperContent from '@/components/PaperContent'
-import StepContent from '@/components/StepContent'
+import { PaperContent, StepContent, ReadingStep } from '@/components'
 
 const steps: { key: LearningStep; label: string }[] = [
   { key: 'reading', label: '논문 읽기' },
@@ -74,20 +73,28 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
       </header>
 
       <main className="p-4 sm:p-8">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-8">
-          {/* Left Panel */}
-          <div className="w-full overflow-hidden">
-            <PaperContent paperId={paperId} />
+        {currentStep === 'reading' ? (
+          // 읽기 단계: PDF만 전체 화면에 표시
+          <div className="w-full">
+            <ReadingStep paperId={paperId} />
           </div>
+        ) : (
+          // 다른 단계: 2열 레이아웃
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-8">
+            {/* Left Panel */}
+            <div className="w-full overflow-hidden">
+              <PaperContent paperId={paperId} />
+            </div>
 
-          {/* Right Panel */}
-          <div className="bg-gray-200 p-4 sm:p-6 rounded-lg min-h-96 w-full overflow-hidden">
-            <StepContent 
-              currentStep={currentStep}
-              paperId={paperId}
-            />
+            {/* Right Panel */}
+            <div className="bg-gray-200 p-4 sm:p-6 rounded-lg min-h-96 w-full overflow-hidden">
+              <StepContent 
+                currentStep={currentStep}
+                paperId={paperId}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-8">

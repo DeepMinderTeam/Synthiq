@@ -1,12 +1,14 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useAuthRedirect } from '@/hooks/useAuthRedirect'
+import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import LogoutButton from '@/components/LogoutButton'
-import type { Topic } from '@/models/topics'
-import { Grid as GridIcon, List as ListIcon } from 'lucide-react'
-import TopicCard from '@/components/TopicCard'
+import { LogoutButton, TopicCard } from '@/components'
+import { Topic } from '@/models/topics'
+import { PlusIcon } from '@heroicons/react/24/outline'
+import { useAuthRedirect } from '@/hooks/useAuthRedirect'
+import { GridIcon, ListIcon } from 'lucide-react'
 
 export default function TopicsPage() {
   useAuthRedirect()
