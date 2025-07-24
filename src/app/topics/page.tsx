@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { LogoutButton, TopicCard } from '@/components'
 import { Topic } from '@/models/topics'
 import { PlusIcon } from '@heroicons/react/24/outline'
+import { useAuthRedirect } from '@/hooks/useAuthRedirect'
+import { GridIcon, ListIcon } from 'lucide-react'
 
 export default function TopicsPage() {
   useAuthRedirect()
