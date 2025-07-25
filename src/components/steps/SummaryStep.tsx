@@ -126,9 +126,9 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
     try {
       setGenerating(true)
       setError(null)
-      setMessage('AI가 요약을 생성하고 있습니다...')
+                      setMessage('AI가 정리노트를 생성하고 있습니다...')
 
-      const response = await fetch('/api/generate-summary', {
+      const response = await fetch('/api/classify-and-summarize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,16 +141,16 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || '요약 생성에 실패했습니다.')
+                        throw new Error(result.error || '정리노트 생성에 실패했습니다.')
       }
 
-      setMessage('AI 요약이 생성되었습니다!')
-      setTimeout(() => setMessage(null), 3000)
+                      setMessage(`정리노트가 완료되었습니다! (${result.summaryCount}개 정리노트 생성)`)
+      setTimeout(() => setMessage(null), 5000)
       
       // 요약 목록 새로고침
       fetchData()
     } catch (err) {
-      setError(err instanceof Error ? err.message : '요약 생성 중 오류가 발생했습니다.')
+                      setError(err instanceof Error ? err.message : '정리노트 생성 중 오류가 발생했습니다.')
     } finally {
       setGenerating(false)
     }
@@ -210,7 +210,7 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
           disabled={generating}
           className="w-full px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600"
         >
-          {generating ? 'AI 요약 생성 중...' : 'AI 요약 생성'}
+                        {generating ? '정리노트 생성 중...' : '정리노트 생성'}
         </button>
       </div>
 

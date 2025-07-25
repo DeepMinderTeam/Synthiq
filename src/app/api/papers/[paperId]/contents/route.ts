@@ -6,7 +6,11 @@ export async function GET(
 ) {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_PDF_API_URL || 'http://localhost:8000'
+    console.log(`외부 API 호출: ${apiUrl}/papers/${params.paperId}/contents`)
+    
     const response = await fetch(`${apiUrl}/papers/${params.paperId}/contents`)
+
+    console.log(`외부 API 응답 상태: ${response.status} ${response.statusText}`)
 
     if (!response.ok) {
       return NextResponse.json(
@@ -16,6 +20,8 @@ export async function GET(
     }
 
     const result = await response.json()
+    console.log(`외부 API 응답: contents_count = ${result.contents_count}`)
+    
     return NextResponse.json(result)
   } catch (error) {
     console.error('논문 콘텐츠 조회 오류:', error)
