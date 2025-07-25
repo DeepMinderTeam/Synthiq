@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Grid as GridIcon, List as ListIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import LogoutButton from '@/components/ui/LogoutButton'
 
 interface HeaderProps {
@@ -19,10 +20,15 @@ export default function Header({
   setViewMode,
   onToggleAddForm,
 }: HeaderProps) {
+  const router = useRouter()
+  
   return (
     <div className="flex items-center justify-between mb-6">
-      <h1 className="text-2xl font-bold bg-white px-4 py-2 rounded">
-        로고 DeepMinder
+      <h1 
+        className="text-2xl font-bold bg-white px-4 py-2 rounded cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={() => router.push('/')}
+      >
+        DeepMinder
       </h1>
       <div className="flex items-center gap-3">
         <input
