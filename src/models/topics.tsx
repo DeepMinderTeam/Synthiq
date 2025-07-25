@@ -5,4 +5,5 @@ export interface Topic {
   topic_name: string; // 주제명
   topic_description?: string; // 주제 설명
   topic_created_at: string; // 생성일시 (ISO 문자열)
+  topic_last_visited_at: string | null // 최근 방문일
 } 
