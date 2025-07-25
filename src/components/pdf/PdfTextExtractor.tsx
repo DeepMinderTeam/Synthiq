@@ -1,86 +1,88 @@
 import React, { useRef, useState } from 'react';
+import { getPaperContents, PaperContent } from '@/lib/pdfApi';
 
-// PaperContent 타입 (src/models/paper_contents.tsx 참고)
-export interface PaperContent {
-  content_id?: number; // 서버에서 할당
-  content_paper_id?: number; // 서버에서 할당
-  content_type?: string;
-  content_index: number;
-  content_text: string;
+interface PdfTextExtractorProps {
+  paperId?: string;
 }
 
-// PDF에서 문단 추출 함수 (동적 import 사용)
-async function extractParagraphsFromPdf(file: File): Promise<string[]> {
-  // 동적으로 pdfjs-dist import
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf')
-  
-  // pdfjs worker 설정
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-
-  const arrayBuffer = await file.arrayBuffer()
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-
-  let fullText = ''
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i)
-    const content = await page.getTextContent()
-    const pageText = content.items.map((item: any) => item.str).join(' ')
-    fullText += pageText + '\n\n'
-  }
-
-  // 문단별로 분리 (빈 줄 기준)
-  return fullText
-    .split(/\n\s*\n/)
-    .map(p => p.trim())
-    .filter(p => p.length > 10)
-}
-
-export default function PdfTextExtractor() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function PdfTextExtractor({ paperId }: PdfTextExtractorProps) {
   const [contents, setContents] = useState<PaperContent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [inputPaperId, setInputPaperId] = useState(paperId || '');
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleExtractText = async () => {
+    if (!inputPaperId) {
+      alert('논문 ID를 입력해주세요.');
+      return;
+    }
 
     setLoading(true);
     setContents([]);
 
     try {
-      const paragraphs = await extractParagraphsFromPdf(file);
+      // 1. 먼저 외부 API로 PDF 텍스트 추출 요청
+      const response = await fetch('/api/process-paper', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paperId: inputPaperId
+        }),
+      });
 
-      // PaperContent 객체 배열로 변환
-      const paperContents: PaperContent[] = paragraphs.map((text, idx) => ({
-        content_index: idx + 1,
-        content_text: text,
-      }));
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`PDF 텍스트 추출 실패: ${response.status} ${response.statusText} - ${errorText}`);
+      }
 
+      console.log('PDF 텍스트 추출 완료');
+
+      // 2. 추출된 문단들을 외부 API에서 가져오기
+      const paperContents = await getPaperContents(inputPaperId);
       setContents(paperContents);
     } catch (error) {
       console.error('PDF 추출 오류:', error);
+      alert('PDF 텍스트 추출에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <input
-        type="file"
-        accept="application/pdf"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-      />
-      {loading && <div>PDF에서 텍스트 추출 중...</div>}
-      <ul>
-        {contents.map((c, idx) => (
-          <li key={idx} style={{ marginBottom: 16, background: '#f5f5f5', padding: 8 }}>
-            <b>문단 {c.content_index}</b>
-            <div>{c.content_text}</div>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={inputPaperId}
+          onChange={(e) => setInputPaperId(e.target.value)}
+          placeholder="논문 ID를 입력하세요"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          onClick={handleExtractText}
+          disabled={loading || !inputPaperId}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? '추출 중...' : '텍스트 추출'}
+        </button>
+      </div>
+      
+      {loading && <div className="text-center py-4">PDF에서 텍스트 추출 중...</div>}
+      
+      {contents.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">추출된 문단 ({contents.length}개)</h3>
+          <ul className="space-y-4">
+            {contents.map((c, idx) => (
+              <li key={idx} className="bg-gray-50 p-4 rounded-lg border">
+                <div className="font-semibold text-gray-700 mb-2">문단 {c.content_index}</div>
+                <div className="text-gray-800 whitespace-pre-wrap">{c.content_text}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 } 

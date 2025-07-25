@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { CloudArrowUpIcon, DocumentArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/hooks/useAuth'
+import { extractParagraphsFromPaper } from '@/lib/pdfApi'
 
 interface PdfUploadModalProps {
   topicId: string
@@ -11,26 +12,6 @@ interface PdfUploadModalProps {
   onClose: () => void
   onUploadSuccess?: (filePath: string, originalFileName: string) => void
   onUploadError?: (error: string) => void
-}
-
-// 임시 PDF 문단 추출 함수 (더미 데이터)
-async function extractParagraphsFromPdf(file: File): Promise<string[]> {
-  // 임시로 더미 문단 생성 (실제 PDF 추출 대신)
-  const dummyParagraphs = [
-    "이것은 첫 번째 문단입니다. 논문의 서론 부분에 해당합니다. 연구의 배경과 목적을 설명합니다.",
-    "두 번째 문단은 연구 방법론에 대한 내용입니다. 실험 설계와 데이터 수집 방법을 상세히 기술합니다.",
-    "세 번째 문단에서는 연구 결과를 설명합니다. 주요 발견사항과 통계적 분석 결과를 제시합니다.",
-    "네 번째 문단은 논의 부분입니다. 연구 결과의 의미와 기존 연구와의 비교를 다룹니다.",
-    "마지막 문단은 결론 및 향후 연구 방향에 대한 내용입니다. 연구의 한계점과 개선 방안을 제시합니다."
-  ]
-  
-  // 실제 파일명을 기반으로 약간의 변화를 주어 더 현실적으로 만듦
-  const fileName = file.name.replace('.pdf', '')
-  const customizedParagraphs = dummyParagraphs.map((paragraph, index) => 
-    paragraph.replace('논문', fileName).replace('연구', `${fileName} 연구`)
-  )
-  
-  return customizedParagraphs
 }
 
 export default function PdfUploadModal({ 
@@ -47,7 +28,23 @@ export default function PdfUploadModal({
   const [description, setDescription] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [extractingText, setExtractingText] = useState(false)
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // API 상태 확인
+  useEffect(() => {
+    const checkApi = async () => {
+      try {
+        const response = await fetch('/api/health')
+        setApiStatus(response.ok ? 'online' : 'offline')
+      } catch (error) {
+        console.error('API 상태 확인 실패:', error)
+        setApiStatus('offline')
+      }
+    }
+
+    checkApi()
+  }, [])
 
   // 안전한 파일명 생성 함수
   const generateSafeFileName = (originalName: string): string => {
@@ -92,17 +89,9 @@ export default function PdfUploadModal({
     }
 
     setIsUploading(true)
-    setExtractingText(true)
     setUploadProgress(0)
 
     try {
-      // 1. 클라이언트에서 PDF 문단 추출 (임시 더미 데이터)
-      console.log('PDF에서 문단 추출 중...')
-      const paragraphs = await extractParagraphsFromPdf(selectedFile)
-      console.log(`추출된 문단 수: ${paragraphs.length}`)
-      setExtractingText(false)
-      setUploadProgress(30)
-
       // 현재 세션 확인
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -145,7 +134,7 @@ export default function PdfUploadModal({
       console.log('최종 파일명:', fileName)
       console.log('업로드 경로:', filePath)
 
-      // 2. Supabase Storage에 업로드
+      // 1. Supabase Storage에 업로드
       const { data, error } = await supabase.storage
         .from('papers')
         .upload(filePath, selectedFile)
@@ -157,9 +146,9 @@ export default function PdfUploadModal({
       }
 
       console.log('Storage 업로드 성공:', data)
-      setUploadProgress(60)
+      setUploadProgress(40)
 
-      // 3. paper 테이블에 레코드 생성
+      // 2. paper 테이블에 레코드 생성
       const { data: paperData, error: paperError } = await supabase
         .from('paper')
         .insert({
@@ -177,39 +166,20 @@ export default function PdfUploadModal({
       }
 
       console.log('논문 저장 성공:', paperData)
-      setUploadProgress(80)
+      setUploadProgress(60)
 
-      // 4. 추출된 문단을 서버로 전송하여 DB에 저장
+      // 3. 외부 API를 사용하여 PDF 텍스트 추출
       const paperId = paperData[0].paper_id
-      const response = await fetch('/api/save-paper-contents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paperId: paperId,
-          contents: paragraphs.map((text, idx) => ({
-            content_index: idx + 1,
-            content_text: text,
-          })),
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '문단 저장에 실패했습니다.')
-      }
-
-      console.log('문단 저장 성공')
+      setExtractingText(true)
+      console.log('PDF에서 문단 추출 중...')
+      
+      await extractParagraphsFromPaper(paperId.toString())
+      console.log('PDF 텍스트 추출 완료')
+      setExtractingText(false)
       setUploadProgress(100)
 
-      // 업로드 성공 시 콜백 호출
       onUploadSuccess?.(filePath, selectedFile.name)
-      
-      // 모달 닫기 및 초기화
-      setTimeout(() => {
-        handleClose()
-      }, 1000)
+      onClose()
 
     } catch (error) {
       console.error('PDF 업로드 오류:', error)
@@ -280,6 +250,23 @@ export default function PdfUploadModal({
 
         {/* 내용 */}
         <div className="p-6 space-y-6">
+          {/* API 상태 표시 */}
+          {apiStatus === 'checking' && (
+            <div className="p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
+              PDF API 서버 상태 확인 중...
+            </div>
+          )}
+          {apiStatus === 'offline' && (
+            <div className="p-2 bg-red-100 text-red-800 rounded text-sm">
+              ⚠️ PDF API 서버에 연결할 수 없습니다. PDF 텍스트 추출 기능이 제한됩니다.
+            </div>
+          )}
+          {apiStatus === 'online' && (
+            <div className="p-2 bg-green-100 text-green-800 rounded text-sm">
+              ✅ PDF API 서버 연결됨
+            </div>
+          )}
+
           {/* 파일 업로드 영역 */}
           <div
             className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
@@ -369,6 +356,7 @@ export default function PdfUploadModal({
             <button
               onClick={handleFileUpload}
               className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              disabled={apiStatus === 'offline'}
             >
               <DocumentArrowUpIcon className="h-5 w-5 mr-2" />
               논문 업로드
@@ -380,6 +368,7 @@ export default function PdfUploadModal({
             <button
               onClick={handleButtonClick}
               className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              disabled={apiStatus === 'offline'}
             >
               <DocumentArrowUpIcon className="h-5 w-5 mr-2" />
               PDF 파일 선택
