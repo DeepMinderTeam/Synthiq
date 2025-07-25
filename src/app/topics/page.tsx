@@ -1,11 +1,12 @@
+// app/topics/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
 import { useAuthRedirect } from '@/hooks/useAuthRedirect'
 import { supabase } from '@/lib/supabaseClient'
-import LogoutButton from '@/components/LogoutButton'
 import type { Topic } from '@/models/topics'
-import { Grid as GridIcon, List as ListIcon } from 'lucide-react'
+import Header from '@/components/Header'
+import Sidebar from '@/components/Sidebar'
 import TopicCard from '@/components/TopicCard'
 
 export default function TopicsPage() {
@@ -13,17 +14,16 @@ export default function TopicsPage() {
 
   const [userName, setUserName] = useState<string>('')
   const [topics, setTopics] = useState<Topic[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState<boolean>(true)
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newTopicName, setNewTopicName] = useState('')
-  const [newTopicDesc, setNewTopicDesc] = useState('')
-  const [addLoading, setAddLoading] = useState(false)
+  const [showAddForm, setShowAddForm] = useState<boolean>(false)
+  const [newTopicName, setNewTopicName] = useState<string>('')
+  const [newTopicDesc, setNewTopicDesc] = useState<string>('')
+  const [addLoading, setAddLoading] = useState<boolean>(false)
   const [addError, setAddError] = useState<string | null>(null)
 
   useEffect(() => {
-    // 로그인된 유저 메타데이터에서 이름 읽기
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         const meta = user.user_metadata as Record<string, any>
@@ -35,41 +35,61 @@ export default function TopicsPage() {
 
   const fetchTopics = async () => {
     setLoading(true)
-    const { data } = await supabase
+    // ★ 제네릭 없이 from('topics') 만 사용
+    const { data, error } = await supabase
       .from('topics')
       .select('*')
       .order('topic_created_at', { ascending: false })
-    if (data) setTopics(data)
+
+    if (error) {
+      console.error('fetchTopics error', error)
+    } else if (data) {
+      setTopics(data as Topic[])
+    }
     setLoading(false)
   }
 
   const handleAddTopic = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
+    e?.preventDefault()
     setAddError(null)
     if (!newTopicName.trim()) {
       setAddError('토픽명을 입력하세요.')
       return
     }
     setAddLoading(true)
+
+    // 1) 현재 로그인한 유저 정보 가져오기
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      setAddError('유저 정보를 불러오지 못했습니다.')
+      setAddLoading(false)
+      return
+    }
+
+    // 2) 토픽 생성
     const { error } = await supabase
       .from('topics')
-      .insert({ topic_name: newTopicName, topic_description: newTopicDesc })
+      .insert({
+        topic_user_id: user.id,
+        topic_name: newTopicName,
+        topic_description: newTopicDesc,
+        topic_last_visited_at: null,
+      } as Topic) // as Topic 캐스트로 안전하게 넣어줍니다.
+
     setAddLoading(false)
 
     if (error) {
       setAddError('토픽 추가 실패: ' + error.message)
     } else {
-      setShowAddForm(false)
       setNewTopicName('')
       setNewTopicDesc('')
+      setShowAddForm(false)
       fetchTopics()
     }
-  }
-
-  const handleEdit = (id: number) => console.log('edit', id)
-  const handleDelete = async (id: number) => {
-    await supabase.from('topics').delete().eq('topic_id', id)
-    fetchTopics()
   }
 
   const filteredTopics = topics.filter((t) =>
@@ -78,65 +98,17 @@ export default function TopicsPage() {
 
   return (
     <div className="flex min-h-screen">
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r p-6 flex flex-col">
-        <div className="flex items-center mb-8">
-          <div className="w-10 h-10 bg-gray-200 rounded-full" />
-          <span className="ml-3 font-semibold">{userName || 'Guest'}</span>
-        </div>
-        <div className="mb-6">
-          <h2 className="text-sm font-semibold mb-2">최근 본 목록</h2>
-          <div className="h-20 bg-gray-100 rounded" />
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold mb-2">즐겨찾기</h2>
-          <div className="h-20 bg-gray-100 rounded" />
-        </div>
-        <div className="mt-auto">
-          <LogoutButton />
-        </div>
-      </aside>
+      <Sidebar userName={userName} />
 
-      {/* MAIN */}
       <main className="flex-1 bg-gray-50 p-6">
-        {/* HEADER */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold bg-white px-4 py-2 rounded">로고 DeepMinder</h1>
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="검색어를 입력하세요"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border p-2 rounded w-64"
-            />
-            <button
-              onClick={() => setShowAddForm((v) => !v)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              토픽 추가하기
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${
-                viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'
-              }`}
-            >
-              <GridIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${
-                viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'
-              }`}
-            >
-              <ListIcon className="w-5 h-5" />
-            </button>
-            <LogoutButton />
-          </div>
-        </div>
+        <Header
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          onToggleAddForm={() => setShowAddForm((v) => !v)}
+        />
 
-        {/* ADD FORM */}
         {showAddForm && (
           <form
             onSubmit={handleAddTopic}
@@ -176,7 +148,6 @@ export default function TopicsPage() {
           </form>
         )}
 
-        {/* TOPIC LIST */}
         {loading ? (
           <div>로딩 중...</div>
         ) : filteredTopics.length === 0 ? (
@@ -187,25 +158,39 @@ export default function TopicsPage() {
               <TopicCard
                 key={topic.topic_id}
                 title={topic.topic_name}
-                description={topic.topic_description}
-                date={topic.topic_created_at?.slice(0, 10) ?? ''}
-                onEdit={() => handleEdit(topic.topic_id)}
-                onDelete={() => handleDelete(topic.topic_id)}
+                description={topic.topic_description || ''}
+                date={topic.topic_created_at.slice(0, 10)}
+                onEdit={() => {}}
+                onDelete={() => {}}
               />
             ))}
           </div>
         ) : (
-          <div className="space-y-6">
-            {filteredTopics.map((topic) => (
-              <TopicCard
-                key={topic.topic_id}
-                title={topic.topic_name}
-                description={topic.topic_description}
-                date={topic.topic_created_at?.slice(0, 10) ?? ''}
-                onEdit={() => handleEdit(topic.topic_id)}
-                onDelete={() => handleDelete(topic.topic_id)}
-              />
-            ))}
+          <div className="overflow-x-auto bg-white rounded shadow">
+            <table className="min-w-full table-auto">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left">토픽명</th>
+                  <th className="px-4 py-2 text-left">최종 방문일</th>
+                  <th className="px-4 py-2 text-left">생성일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTopics.map((topic) => (
+                  <tr key={topic.topic_id} className="border-t">
+                    <td className="px-4 py-3">{topic.topic_name}</td>
+                    <td className="px-4 py-3">
+                      {topic.topic_last_visited_at
+                        ? topic.topic_last_visited_at.slice(0, 10)
+                        : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {topic.topic_created_at.slice(0, 10)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </main>
