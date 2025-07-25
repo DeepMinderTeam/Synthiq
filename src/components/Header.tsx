@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Grid as GridIcon, List as ListIcon } from 'lucide-react'
-import LogoutButton from '@/components/LogoutButton'
+import LogoutButton from '@/components/ui/LogoutButton'
 
 interface HeaderProps {
   searchQuery: string

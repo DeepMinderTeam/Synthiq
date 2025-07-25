@@ -6,8 +6,7 @@
 import { usePaperStore, type LearningStep } from '@/hooks/paperStore'
 import { Tab } from '@headlessui/react'
 import { CheckIcon } from '@heroicons/react/24/solid'
-import PaperContent from '@/components/PaperContent'
-import StepContent from '@/components/StepContent'
+import { PaperContent, StepContent, ReadingStep } from '@/components'
 
 const steps: { key: LearningStep; label: string }[] = [
   { key: 'reading', label: '논문 읽기' },
@@ -33,8 +32,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b px-8 py-4">
-        <div className="text-2xl font-bold mb-6">로고 DeepMinder</div>
+      <header className="bg-white border-b px-4 sm:px-8 py-4">
+        <div className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">로고 DeepMinder</div>
         
         {/* Progress Steps with Headless UI */}
         <Tab.Group selectedIndex={getCurrentStepIndex()} onChange={(index) => setCurrentStep(steps[index].key)}>
@@ -73,19 +72,29 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
         </Tab.Group>
       </header>
 
-      <main className="p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Panel */}
-          <PaperContent paperId={paperId} />
-
-          {/* Right Panel */}
-          <div className="bg-gray-200 p-6 rounded-lg min-h-96">
-            <StepContent 
-              currentStep={currentStep}
-              paperId={paperId}
-            />
+      <main className="p-4 sm:p-8">
+        {currentStep === 'reading' ? (
+          // 읽기 단계: PDF만 전체 화면에 표시
+          <div className="w-full">
+            <ReadingStep paperId={paperId} />
           </div>
-        </div>
+        ) : (
+          // 다른 단계: 2열 레이아웃
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-8">
+            {/* Left Panel */}
+            <div className="w-full overflow-hidden">
+              <PaperContent paperId={paperId} />
+            </div>
+
+            {/* Right Panel */}
+            <div className="bg-gray-200 p-4 sm:p-6 rounded-lg min-h-96 w-full overflow-hidden">
+              <StepContent 
+                currentStep={currentStep}
+                paperId={paperId}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-8">
@@ -97,7 +106,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
               }
             }}
             disabled={currentStep === 'reading'}
-            className="px-6 py-2 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+            className="px-4 sm:px-6 py-2 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm sm:text-base"
           >
             이전 단계
           </button>
@@ -109,7 +118,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
               }
             }}
             disabled={currentStep === 'stats'}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+            className="px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors text-sm sm:text-base"
           >
             다음 단계
           </button>

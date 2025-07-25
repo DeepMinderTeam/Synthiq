@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import type { Topic } from '@/models/topics'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
-import TopicCard from '@/components/TopicCard'
+import TopicCard from '@/components/ui/TopicCard'
 
 export default function TopicsPage() {
   useAuthRedirect()

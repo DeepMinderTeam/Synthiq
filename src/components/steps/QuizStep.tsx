@@ -49,17 +49,12 @@ export default function QuizStep({ paperId }: QuizStepProps) {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">논문 퀴즈</h2>
-        <div className="space-y-4">
-          <div className="p-4 bg-blue-50 rounded">
-            <div className="font-semibold mb-2">퀴즈 로딩 중...</div>
-            <div className="space-y-2">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="h-4 bg-gray-300 rounded animate-pulse" 
-                     style={{ width: `${Math.random() * 70 + 30}%` }} />
-              ))}
-            </div>
-          </div>
+        <div className="h-8 bg-gray-300 rounded animate-pulse" />
+        <div className="space-y-2">
+          {Array.from({ length: 12 }, (_, i) => (
+            <div key={i} className="h-4 bg-gray-300 rounded animate-pulse" 
+                 style={{ width: `${(i % 4) * 15 + 45}%` }} />
+          ))}
         </div>
       </div>
     )
