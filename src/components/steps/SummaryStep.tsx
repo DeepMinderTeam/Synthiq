@@ -112,6 +112,9 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
 
       setMessage(result.message)
       setTimeout(() => setMessage(null), 3000)
+      
+      // 텍스트 추출 후 데이터 새로고침
+      fetchData()
     } catch (err) {
       setError(err instanceof Error ? err.message : '텍스트 추출 중 오류가 발생했습니다.')
     } finally {
@@ -194,13 +197,13 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
 
       {/* 액션 버튼들 */}
       <div className="mb-6 space-y-2">
-        <button
+        {/* <button
           onClick={extractPdfText}
           disabled={extracting}
           className="w-full px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-green-600"
         >
           {extracting ? '텍스트 추출 중...' : 'PDF 텍스트 추출'}
-        </button>
+        </button> */}
         
         <button
           onClick={generateAISummary}

@@ -1,41 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
-import pdf from 'pdf-parse'
-import fs from 'fs'
-import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
-    const { paperId, filePath } = await request.json()
+    const { paperId, contents } = await request.json()
 
-    if (!paperId || !filePath) {
+    if (!paperId || !contents || !Array.isArray(contents)) {
       return NextResponse.json(
-        { error: 'paperId와 filePath가 필요합니다.' },
+        { error: 'paperId와 contents 배열이 필요합니다.' },
         { status: 400 }
       )
     }
-
-    // PDF 파일 경로 구성
-    const pdfPath = path.join(process.cwd(), 'public', filePath)
-    if (!fs.existsSync(pdfPath)) {
-      return NextResponse.json(
-        { error: 'PDF 파일을 찾을 수 없습니다.' },
-        { status: 404 }
-      )
-    }
-
-    // PDF 파일 읽기
-    const pdfBuffer = fs.readFileSync(pdfPath)
-    // PDF 텍스트 추출
-    const pdfData = await pdf(pdfBuffer)
-    const fullText = pdfData.text
-
-    // 텍스트를 문단별로 분리 (빈 줄 기준)
-    const paragraphs = fullText
-      .split(/\n\s*\n/) // 빈 줄로 문단 구분
-      .map(paragraph => paragraph.trim())
-      .filter(paragraph => paragraph.length > 10) // 너무 짧은 문단 제외
-      .filter(paragraph => !/^\s*$/.test(paragraph)) // 빈 문단 제외
 
     // 기존 데이터가 있는지 확인
     const { data: existingContents } = await supabase
@@ -60,11 +35,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 새로운 paper_contents 삽입
-    const contentsToInsert = paragraphs.map((text, index) => ({
+    const contentsToInsert = contents.map((content: any) => ({
       content_paper_id: parseInt(paperId),
       content_type: '본문',
-      content_index: index + 1,
-      content_text: text
+      content_index: content.content_index,
+      content_text: content.content_text
     }))
 
     const { data: insertedContents, error: insertError } = await supabase
@@ -82,16 +57,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${paragraphs.length}개의 문단이 추출되어 저장되었습니다.`,
-      contents: insertedContents,
-      totalPages: pdfData.numpages,
-      textLength: fullText.length
+      message: `${contents.length}개의 문단이 저장되었습니다.`,
+      contents: insertedContents
     })
 
   } catch (error) {
-    console.error('PDF 텍스트 추출 오류:', error)
+    console.error('문단 저장 오류:', error)
     return NextResponse.json(
-      { error: 'PDF 텍스트 추출 중 오류가 발생했습니다.' },
+      { error: '문단 저장 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }
