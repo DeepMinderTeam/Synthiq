@@ -14,9 +14,10 @@ interface PaperContentProps {
 
 export default function PaperContent({ paperId }: PaperContentProps) {
   const [contents, setContents] = useState<PaperContentType[]>([])
-  const [showTranslation, setShowTranslation] = useState(false)
+  const [activeTab, setActiveTab] = useState<'original' | 'translation'>('original')
   const [translating, setTranslating] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(0)
 
   useEffect(() => {
     fetchContents()
@@ -59,7 +60,7 @@ export default function PaperContent({ paperId }: PaperContentProps) {
         throw new Error(result.error || '번역에 실패했습니다.')
       }
 
-      setMessage(result.message)
+      setMessage('번역이 완료되었습니다!')
       setTimeout(() => setMessage(null), 3000)
       
       // 번역 후 데이터 새로고침
@@ -72,24 +73,48 @@ export default function PaperContent({ paperId }: PaperContentProps) {
     }
   }
 
+  const handlePageChange = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentPage > 0) {
+      setCurrentPage(currentPage - 1)
+    } else if (direction === 'next' && currentPage < contents.length - 1) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const handleTabChange = (tab: 'original' | 'translation') => {
+    setActiveTab(tab)
+    if (tab === 'translation') {
+      setCurrentPage(0) // 번역 모드 전환 시 첫 페이지로
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
-      <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-800">논문 내용</h3>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowTranslation(!showTranslation)}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-          >
-            {showTranslation ? '원문 보기' : '번역 보기'}
-          </button>
-          <button
-            onClick={handleTranslate}
-            disabled={translating}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {translating ? '번역 중...' : '번역하기'}
-          </button>
+      <div className="p-4 sm:p-6 border-b border-gray-100">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">논문 내용</h3>
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => handleTabChange('original')}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === 'original'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              📄 원문 보기
+            </button>
+            <button
+              onClick={() => handleTabChange('translation')}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === 'translation'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              🌐 번역 보기
+            </button>
+          </div>
         </div>
       </div>
       
@@ -100,25 +125,59 @@ export default function PaperContent({ paperId }: PaperContentProps) {
       )}
       
       <div className="flex-1 p-4 sm:p-6 overflow-hidden">
-        {showTranslation ? (
-          <div className="h-full overflow-y-auto space-y-4">
+        {activeTab === 'translation' ? (
+          <div className="h-full flex flex-col">
+            {/* AI 번역 버튼 */}
+            <div className="mb-4 flex-shrink-0 flex justify-end">
+              <button
+                onClick={handleTranslate}
+                disabled={translating}
+                className="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
+              >
+                {translating ? '번역 중...' : '✨ AI 번역'}
+              </button>
+            </div>
             {contents.length > 0 ? (
-              contents.map((content) => (
-                <div key={content.content_id} className="space-y-2">
-                  {content.content_type && (
-                    <div className="text-sm font-medium text-gray-600">
-                      {content.content_type}
-                    </div>
-                  )}
-                  <div className="text-gray-800 prose prose-sm max-w-none">
-                    {content.content_text_eng ? (
-                      <ReactMarkdown>{content.content_text_eng}</ReactMarkdown>
-                    ) : (
-                      <div className="text-gray-500">번역이 없습니다. 번역하기 버튼을 눌러주세요.</div>
+              <>
+                {/* 페이지네이션 헤더 */}
+                <div className="flex justify-between items-center mb-4 px-2">
+                  <button
+                    onClick={() => handlePageChange('prev')}
+                    disabled={currentPage === 0}
+                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    ← 이전
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    {currentPage + 1} / {contents.length}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange('next')}
+                    disabled={currentPage === contents.length - 1}
+                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    다음 →
+                  </button>
+                </div>
+                
+                {/* 현재 페이지 내용 */}
+                <div className="flex-1 overflow-y-auto">
+                  <div className="space-y-2">
+                    {contents[currentPage].content_type && (
+                      <div className="text-sm font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                        {contents[currentPage].content_type}
+                      </div>
                     )}
+                    <div className="text-gray-800 prose prose-sm max-w-none" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
+                      {contents[currentPage].content_text_eng ? (
+                        <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                      ) : (
+                        <div className="text-gray-500">번역이 없습니다. 번역하기 버튼을 눌러주세요.</div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))
+              </>
             ) : (
               <div className="text-gray-500">논문 내용이 없습니다.</div>
             )}

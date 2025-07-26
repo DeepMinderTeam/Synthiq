@@ -6,13 +6,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperSummary } from '@/models/paper_summaries'
 import { Paper } from '@/models/paper'
-import ReactMarkdown from 'react-markdown'
+import AISummaryStep from './AISummaryStep'
+import SelfSummaryStep from './SelfSummaryStep'
 
 interface SummaryStepProps {
   paperId: string
+  activeTab: 'ai' | 'self'
 }
 
-export default function SummaryStep({ paperId }: SummaryStepProps) {
+export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   const [paper, setPaper] = useState<Paper | null>(null)
   const [summaries, setSummaries] = useState<PaperSummary[]>([])
   const [loading, setLoading] = useState(false)
@@ -20,10 +22,20 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [selfSummary, setSelfSummary] = useState('')
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     fetchData()
   }, [paperId])
+
+  // 나의 정리노트 탭으로 이동할 때 기존 내용 로드
+  useEffect(() => {
+    if (activeTab === 'self' && summaries.length > 0 && summaries[0].summary_text_self) {
+      setSelfSummary(summaries[0].summary_text_self)
+    }
+  }, [activeTab, summaries])
 
   const fetchData = async () => {
     try {
@@ -126,7 +138,7 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
     try {
       setGenerating(true)
       setError(null)
-                      setMessage('AI가 정리노트를 생성하고 있습니다...')
+      setMessage('🤖 AI가 정리노트를 생성하고 있습니다...')
 
       const response = await fetch('/api/classify-and-summarize', {
         method: 'POST',
@@ -141,19 +153,72 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
       const result = await response.json()
 
       if (!response.ok) {
-                        throw new Error(result.error || '정리노트 생성에 실패했습니다.')
+        throw new Error(result.error || '정리노트 생성에 실패했습니다.')
       }
 
-                      setMessage(`정리노트가 완료되었습니다! (${result.summaryCount}개 정리노트 생성)`)
+      setMessage(`✅ AI 정리노트가 완료되었습니다! (${result.summaryCount}개 정리노트 생성)`)
       setTimeout(() => setMessage(null), 5000)
       
       // 요약 목록 새로고침
       fetchData()
     } catch (err) {
-                      setError(err instanceof Error ? err.message : '정리노트 생성 중 오류가 발생했습니다.')
+      setError(err instanceof Error ? err.message : '정리노트 생성 중 오류가 발생했습니다.')
     } finally {
       setGenerating(false)
     }
+  }
+
+  const saveSelfSummary = async (summaryId: number, showMessage = true) => {
+    if (!selfSummary.trim()) return
+    
+    try {
+      setIsSaving(true)
+      const response = await fetch('/api/save-self-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          summaryId,
+          summaryText: selfSummary
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('사용자 요약 저장에 실패했습니다.')
+      }
+
+      if (showMessage) {
+        setMessage('✅ 사용자 요약이 저장되었습니다!')
+        setTimeout(() => setMessage(null), 2000)
+      }
+      
+      // 데이터 새로고침
+      fetchData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '사용자 요약 저장 중 오류가 발생했습니다.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // 자동 저장 함수
+  const handleSelfSummaryChange = (value: string) => {
+    setSelfSummary(value)
+    
+    // 기존 타이머 취소
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer)
+    }
+    
+    // 2초 후 자동 저장
+    const timer = setTimeout(() => {
+      if (value.trim()) {
+        saveSelfSummary(0, false) // 메시지 없이 저장
+      }
+    }, 2000)
+    
+    setAutoSaveTimer(timer)
   }
 
   if (loading) {
@@ -193,38 +258,25 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
         </div>
       )}
 
-      {/* 액션 버튼들 */}
-      <div className="mb-4 flex-shrink-0">
-        <button
-          onClick={generateAISummary}
-          disabled={generating}
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 text-sm font-medium"
-        >
-          {generating ? '정리노트 생성 중...' : '정리노트 생성'}
-        </button>
-      </div>
 
-      {/* 요약 목록 */}
-      <div className="flex-1 overflow-y-auto space-y-3">
-        {summaries.length > 0 ? (
-          summaries.map((summary) => (
-            <div key={summary.summary_id} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                  {summary.summary_type}
-                </span>
-              </div>
-              <div className="prose prose-sm max-w-none text-gray-700">
-                <ReactMarkdown>{summary.summary_text}</ReactMarkdown>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-gray-500 text-center py-8">
-            아직 요약이 없습니다. 위 버튼을 눌러 요약을 생성해보세요.
-          </div>
-        )}
-      </div>
+
+      {/* 탭 내용 */}
+      {activeTab === 'ai' && (
+        <AISummaryStep 
+          summaries={summaries}
+          generating={generating}
+          generateAISummary={generateAISummary}
+        />
+      )}
+
+      {/* 나의 정리노트 탭 내용 */}
+      {activeTab === 'self' && (
+        <SelfSummaryStep 
+          selfSummary={selfSummary}
+          isSaving={isSaving}
+          handleSelfSummaryChange={handleSelfSummaryChange}
+        />
+      )}
     </div>
   )
 } 
