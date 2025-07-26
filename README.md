@@ -21,7 +21,13 @@ cd main_repo
 # 2. 의존성 설치
 npm install
 
-# 3. 개발 서버 실행
+# 3. 환경변수 설정
+# .env.local 파일을 생성하고 다음 내용을 추가하세요:
+NEXT_PUBLIC_PDF_API_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# 4. 개발 서버 실행
 npm run dev
 ```
 
@@ -35,6 +41,26 @@ npm run build    # 프로덕션용 빌드
 npm run start    # 프로덕션 서버 실행
 npm run lint     # ESLint 실행
 ```
+
+---
+
+## 🔧 환경변수 설정
+
+프로젝트 루트에 `.env.local` 파일을 생성하고 다음 환경변수를 설정하세요:
+
+```env
+# PDF 텍스트 추출 API URL
+NEXT_PUBLIC_PDF_API_URL=http://localhost:8000
+
+# Supabase 설정
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### PDF API 서버 실행
+PDF 텍스트 추출 기능을 사용하려면 별도의 PDF API 서버가 실행되어야 합니다:
+- API 서버 URL: `http://localhost:8000`
+- 엔드포인트: `POST /process-paper`
 
 ---
 
