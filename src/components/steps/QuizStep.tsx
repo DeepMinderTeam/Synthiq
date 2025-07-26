@@ -45,6 +45,9 @@ interface TestAttemptItem {
   attempt_item_quiz_id: number
   attempt_user_answer: string
   attempt_is_correct: boolean
+  attempt_score?: number // AI 채점 점수
+  attempt_feedback?: string // AI 피드백
+  attempt_explanation?: string // AI 상세 해설
   quiz_question?: string // 조인으로 가져올 때 사용
   quiz_answer?: string
   quiz_explanation?: string
@@ -387,6 +390,7 @@ export default function QuizStep({ paperId }: QuizStepProps) {
       // 타이머 정지 및 시간 기록
       stopTimer()
       const finalDuration = seconds
+      console.log('퀴즈 제출 - 소요시간:', finalDuration, '초')
 
       // 새로 생성된 테스트인 경우 먼저 test_attempts 레코드 생성
       let actualAttemptId = currentAttempt.attempt_id
@@ -418,21 +422,33 @@ export default function QuizStep({ paperId }: QuizStepProps) {
         if (!quiz) continue
 
         let isCorrect = false
+        let score = 0
+        let feedback = ''
+        let explanation = ''
 
         if (quiz.quiz_type === 'multiple_choice') {
           // 객관식은 자동 채점
           isCorrect = userAnswer === quiz.quiz_answer
+          score = isCorrect ? 100 : 0
+          feedback = isCorrect ? '정답입니다!' : '틀렸습니다.'
+          explanation = quiz.quiz_explanation || '정답을 확인해보세요.'
         } else {
           // 주관식은 AI 채점
           const gradingResult = await gradeSubjectiveAnswer(quiz, userAnswer)
           isCorrect = gradingResult.isCorrect
+          score = gradingResult.score
+          feedback = gradingResult.feedback
+          explanation = gradingResult.explanation
         }
 
         gradingResults.push({
           attempt_item_attempt_id: actualAttemptId,
           attempt_item_quiz_id: parseInt(quizId),
           attempt_user_answer: userAnswer,
-          attempt_is_correct: isCorrect
+          attempt_is_correct: isCorrect,
+          attempt_score: score,
+          attempt_feedback: feedback,
+          attempt_explanation: explanation
         })
       }
 
@@ -443,20 +459,27 @@ export default function QuizStep({ paperId }: QuizStepProps) {
 
       if (itemsError) throw itemsError
 
-      // 총점 계산 (정답 개수 기반)
-      const correctCount = gradingResults.filter(result => result.attempt_is_correct).length
-      const totalScore = Math.round((correctCount / gradingResults.length) * 100)
+      // 총점 계산 (개별 점수 기반)
+      const totalScore = Math.round(gradingResults.reduce((sum, result) => sum + (result.attempt_score || 0), 0) / gradingResults.length)
+
+      console.log('퀴즈 제출 - 점수:', totalScore, '소요시간:', finalDuration)
 
       // 테스트 시도 업데이트
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('test_attempts')
         .update({
           attempt_score: totalScore,
           attempt_duration_sec: finalDuration
         })
         .eq('attempt_id', actualAttemptId)
+        .select()
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('테스트 시도 업데이트 오류:', updateError)
+        throw updateError
+      }
+
+      console.log('테스트 시도 업데이트 성공:', updateData)
 
       // 응시 기록 보기로 전환 (실제 attempt_id 사용)
       const updatedAttempt = { ...currentAttempt, attempt_id: actualAttemptId }
@@ -580,7 +603,12 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                   {attempt.attempt_id < 0 ? (
                     <span className="text-blue-600 font-medium">새 퀴즈</span>
                   ) : (
-                    `점수: ${attempt.attempt_score}점`
+                    <>
+                      <div>점수: {attempt.attempt_score}점</div>
+                      {attempt.attempt_duration_sec > 0 && (
+                        <div>소요시간: {formatTime(attempt.attempt_duration_sec)}</div>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="text-xs text-gray-400 mt-1">
@@ -660,8 +688,27 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                         <span className="font-medium text-gray-600">정답:</span>
                         <span className="ml-2 text-green-600">{item.quiz_answer}</span>
                       </div>
+                      {item.attempt_score !== undefined && (
+                        <div className="text-sm">
+                          <span className="font-medium text-gray-600">점수:</span>
+                          <span className="ml-2 text-blue-600">{item.attempt_score}점</span>
+                        </div>
+                      )}
                     </div>
-                    {item.quiz_explanation && (
+                    {/* AI 피드백 표시 */}
+                    {item.attempt_feedback && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg text-sm text-gray-700 border border-blue-200">
+                        <strong className="text-blue-800">피드백:</strong> {item.attempt_feedback}
+                      </div>
+                    )}
+                    {/* AI 해설 표시 */}
+                    {item.attempt_explanation && (
+                      <div className="mt-3 p-3 bg-yellow-50 rounded-lg text-sm text-gray-700 border border-yellow-200">
+                        <strong className="text-yellow-800">상세 해설:</strong> {item.attempt_explanation}
+                      </div>
+                    )}
+                    {/* 기존 해설 표시 (AI 해설이 없을 때) */}
+                    {!item.attempt_explanation && item.quiz_explanation && (
                       <div className="mt-3 p-3 bg-yellow-50 rounded-lg text-sm text-gray-700 border border-yellow-200">
                         <strong className="text-yellow-800">해설:</strong> {item.quiz_explanation}
                       </div>

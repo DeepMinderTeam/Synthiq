@@ -5,4 +5,7 @@ export interface TestAttemptItem {
   attempt_item_quiz_id: number; // 소속 퀴즈 ID
   attempt_user_answer?: string; // 사용자의 답변
   attempt_is_correct?: boolean; // 정답 여부
+  attempt_score?: number; // AI 채점 점수 (0-100)
+  attempt_feedback?: string; // AI 피드백
+  attempt_explanation?: string; // AI 상세 해설
 } 
