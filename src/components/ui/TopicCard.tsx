@@ -1,7 +1,6 @@
-// components/TopicCard.tsx
 'use client'
 
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Settings as CogIcon } from 'lucide-react'
 
 interface TopicCardProps {
@@ -21,7 +20,25 @@ export default function TopicCard({
   onEdit,
   onDelete,
 }: TopicCardProps) {
-  const [menuOpen, setMenuOpen] = React.useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // 메뉴 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [menuOpen])
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-visible relative flex flex-col h-60">
@@ -44,10 +61,11 @@ export default function TopicCard({
           <p className="text-xs text-gray-400 mt-0.5">{date}</p>
         </div>
 
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="토픽 설정 메뉴 열기"
           >
             <CogIcon className="w-5 h-5 text-gray-500" />
           </button>
@@ -55,16 +73,22 @@ export default function TopicCard({
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
               <button
-                onClick={onEdit}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                onClick={() => {
+                  onEdit()
+                  setMenuOpen(false)
+                }}
+                className="w-full text-center px-4 py-2 text-sm hover:bg-gray-100"
               >
-                수정하기
+                 수정하기
               </button>
               <button
-                onClick={onDelete}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                onClick={() => {
+                  onDelete()
+                  setMenuOpen(false)
+                }}
+                className="w-full text-center px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
               >
-                삭제하기
+                 삭제하기
               </button>
             </div>
           )}
