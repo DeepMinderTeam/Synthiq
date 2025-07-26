@@ -107,22 +107,18 @@ export default function PdfViewer({ filePath, title }: PdfViewerProps) {
 
   if (loading) {
     return (
-      <div className="border rounded-lg p-4 bg-white">
-        <div className="h-64 bg-gray-200 rounded animate-pulse flex items-center justify-center">
-          <div className="text-gray-500">PDF 로딩 중...</div>
-        </div>
+      <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+        <div className="text-gray-500 text-sm">PDF 로딩 중...</div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="border rounded-lg p-4 bg-white">
-        <div className="h-64 bg-red-50 rounded flex items-center justify-center">
-          <div className="text-red-500 text-center">
-            <div className="font-semibold mb-2">PDF 로드 오류</div>
-            <div className="text-sm">{error}</div>
-          </div>
+      <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+        <div className="text-red-500 text-center">
+          <div className="font-semibold mb-2 text-sm">PDF 로드 오류</div>
+          <div className="text-xs">{error}</div>
         </div>
       </div>
     )
@@ -130,22 +126,63 @@ export default function PdfViewer({ filePath, title }: PdfViewerProps) {
 
   if (!Document || !Page) {
     return (
-      <div className="border rounded-lg p-4 bg-white">
-        <div className="h-64 bg-gray-200 rounded animate-pulse flex items-center justify-center">
-          <div className="text-gray-500">PDF 뷰어 초기화 중...</div>
-        </div>
+      <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+        <div className="text-gray-500 text-sm">PDF 뷰어 초기화 중...</div>
       </div>
     )
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
-      {title && (
-        <h4 className="text-lg font-semibold mb-4 text-gray-800">{title}</h4>
+    <div className="h-full flex flex-col bg-white rounded-lg border border-gray-200">
+      {/* 컨트롤 */}
+      {numPages > 0 && (
+        <div className="flex-shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2 p-3 bg-gray-50 border-b border-gray-200">
+          {/* 페이지 네비게이션 */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => changePage(-1)}
+              disabled={pageNumber <= 1}
+              className="px-2 py-1 bg-blue-500 text-white rounded text-xs disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600"
+            >
+              이전
+            </button>
+            <span className="text-xs text-gray-600">
+              {pageNumber} / {numPages}
+            </span>
+            <button
+              onClick={() => changePage(1)}
+              disabled={pageNumber >= numPages}
+              className="px-2 py-1 bg-blue-500 text-white rounded text-xs disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600"
+            >
+              다음
+            </button>
+          </div>
+
+          {/* 확대/축소 */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => changeScale(scale - 0.1)}
+              disabled={scale <= 0.5}
+              className="px-2 py-1 bg-gray-500 text-white rounded text-xs disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-gray-600"
+            >
+              -
+            </button>
+            <span className="text-xs text-gray-600 w-10 text-center">
+              {Math.round(scale * 100)}%
+            </span>
+            <button
+              onClick={() => changeScale(scale + 0.1)}
+              disabled={scale >= 2.0}
+              className="px-2 py-1 bg-gray-500 text-white rounded text-xs disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-gray-600"
+            >
+              +
+            </button>
+          </div>
+        </div>
       )}
       
       {/* PDF 뷰어 */}
-      <div className="w-full overflow-auto mb-4">
+      <div className="flex-1 overflow-auto p-4">
         <div className="flex justify-center min-w-max">
           <Document
             file={pdfUrl}
@@ -163,53 +200,6 @@ export default function PdfViewer({ filePath, title }: PdfViewerProps) {
           </Document>
         </div>
       </div>
-
-      {/* 컨트롤 */}
-      {numPages > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-gray-50 rounded">
-          {/* 페이지 네비게이션 */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => changePage(-1)}
-              disabled={pageNumber <= 1}
-              className="px-3 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600"
-            >
-              이전
-            </button>
-            <span className="text-sm text-gray-600">
-              {pageNumber} / {numPages}
-            </span>
-            <button
-              onClick={() => changePage(1)}
-              disabled={pageNumber >= numPages}
-              className="px-3 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600"
-            >
-              다음
-            </button>
-          </div>
-
-          {/* 확대/축소 */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => changeScale(scale - 0.1)}
-              disabled={scale <= 0.5}
-              className="px-2 py-1 bg-gray-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-gray-600"
-            >
-              -
-            </button>
-            <span className="text-sm text-gray-600 w-12 text-center">
-              {Math.round(scale * 100)}%
-            </span>
-            <button
-              onClick={() => changeScale(scale + 0.1)}
-              disabled={scale >= 2.0}
-              className="px-2 py-1 bg-gray-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-gray-600"
-            >
-              +
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 } 

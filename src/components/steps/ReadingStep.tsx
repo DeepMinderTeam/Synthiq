@@ -79,26 +79,28 @@ export default function ReadingStep({ paperId }: ReadingStepProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold mb-4">{paper.paper_title}</h2>
+    <div className="h-full flex flex-col space-y-4">
+      <div className="flex-shrink-0">
+        <h2 className="text-lg font-bold text-gray-800 mb-3 line-clamp-2">{paper.paper_title}</h2>
         {paper.paper_abstract && (
-          <div className="space-y-2 mb-6">
-            <h3 className="font-semibold">초록</h3>
-            <div className="text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
-              {paper.paper_abstract}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-gray-700">초록</h3>
+            <div className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
+              <div className="line-clamp-4">{paper.paper_abstract}</div>
             </div>
           </div>
         )}
       </div>
       
       {paper.paper_url && (
-        <div className="space-y-4">
-          <h3 className="font-semibold">논문 PDF</h3>
-          <PdfViewer 
-            filePath={paper.paper_url} 
-            title={paper.paper_title}
-          />
+        <div className="flex-1 min-h-0">
+          <h3 className="font-semibold text-gray-700 mb-3">논문 PDF</h3>
+          <div className="h-full">
+            <PdfViewer 
+              filePath={paper.paper_url} 
+              title={paper.paper_title}
+            />
+          </div>
         </div>
       )}
     </div>
