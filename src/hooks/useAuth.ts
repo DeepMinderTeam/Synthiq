@@ -11,11 +11,25 @@ export function useAuth() {
 
   const fetchUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      const { data, error } = await supabase
+      // 먼저 user_id로 시도
+      let { data, error } = await supabase
         .from('user')
         .select('*')
-        .eq('id', supabaseUser.id)
+        .eq('user_id', supabaseUser.id)
         .single()
+
+      // user_id가 없으면 id로 시도
+      if (error) {
+        console.log('user_id로 조회 실패, id로 재시도:', error.message)
+        const { data: data2, error: error2 } = await supabase
+          .from('user')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single()
+        
+        data = data2
+        error = error2
+      }
 
       if (error) {
         console.error('사용자 프로필을 가져오는 중 오류:', error)
