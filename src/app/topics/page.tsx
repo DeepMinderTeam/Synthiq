@@ -1,4 +1,3 @@
-// app/topics/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -8,6 +7,7 @@ import type { Topic } from '@/models/topics'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import TopicCard from '@/components/ui/TopicCard'
+import EditTopicModal from '@/components/modals/EditTopicModal'
 
 export default function TopicsPage() {
   useAuthRedirect()
@@ -22,6 +22,7 @@ export default function TopicsPage() {
   const [newTopicDesc, setNewTopicDesc] = useState<string>('')
   const [addLoading, setAddLoading] = useState<boolean>(false)
   const [addError, setAddError] = useState<string | null>(null)
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -35,7 +36,6 @@ export default function TopicsPage() {
 
   const fetchTopics = async () => {
     setLoading(true)
-    // ★ 제네릭 없이 from('topics') 만 사용
     const { data, error } = await supabase
       .from('topics')
       .select('*')
@@ -58,7 +58,6 @@ export default function TopicsPage() {
     }
     setAddLoading(true)
 
-    // 1) 현재 로그인한 유저 정보 가져오기
     const {
       data: { user },
       error: userError,
@@ -70,15 +69,12 @@ export default function TopicsPage() {
       return
     }
 
-    // 2) 토픽 생성
-    const { error } = await supabase
-      .from('topics')
-      .insert({
-        topic_user_id: user.id,
-        topic_name: newTopicName,
-        topic_description: newTopicDesc,
-        topic_last_visited_at: null,
-      } as Topic) // as Topic 캐스트로 안전하게 넣어줍니다.
+    const { error } = await supabase.from('topics').insert({
+      topic_user_id: user.id,
+      topic_name: newTopicName,
+      topic_description: newTopicDesc,
+      topic_last_visited_at: null,
+    } as Topic)
 
     setAddLoading(false)
 
@@ -88,6 +84,41 @@ export default function TopicsPage() {
       setNewTopicName('')
       setNewTopicDesc('')
       setShowAddForm(false)
+      fetchTopics()
+    }
+  }
+
+  const handleDeleteTopic = async (topicId: number) => {
+    const ok = confirm('정말 삭제하시겠어요?')
+    if (!ok) return
+
+    const { error } = await supabase
+      .from('topics')
+      .delete()
+      .eq('topic_id', topicId)
+
+    if (error) {
+      alert('삭제 실패: ' + error.message)
+    } else {
+      fetchTopics()
+    }
+  }
+
+  const handleSaveEdit = async (updated: {
+    topic_name: string
+    topic_description: string
+  }) => {
+    if (!editingTopic) return
+
+    const { error } = await supabase
+      .from('topics')
+      .update(updated)
+      .eq('topic_id', editingTopic.topic_id)
+
+    if (error) {
+      alert('수정 실패: ' + error.message)
+    } else {
+      setEditingTopic(null)
       fetchTopics()
     }
   }
@@ -160,8 +191,8 @@ export default function TopicsPage() {
                 title={topic.topic_name}
                 description={topic.topic_description || ''}
                 date={topic.topic_created_at.slice(0, 10)}
-                onEdit={() => {}}
-                onDelete={() => {}}
+                onEdit={() => setEditingTopic(topic)}
+                onDelete={() => handleDeleteTopic(topic.topic_id)}
               />
             ))}
           </div>
@@ -192,6 +223,14 @@ export default function TopicsPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {editingTopic && (
+          <EditTopicModal
+            topic={editingTopic}
+            onClose={() => setEditingTopic(null)}
+            onSave={handleSaveEdit}
+          />
         )}
       </main>
     </div>
