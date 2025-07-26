@@ -34,20 +34,34 @@ export default function TopicsPage() {
     fetchTopics()
   }, [])
 
-  const fetchTopics = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('topics')
-      .select('*')
-      .order('topic_created_at', { ascending: false })
+ const fetchTopics = async () => {
+  setLoading(true)
 
-    if (error) {
-      console.error('fetchTopics error', error)
-    } else if (data) {
-      setTopics(data as Topic[])
-    }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    console.error('유저 정보를 가져오는 데 실패했습니다:', userError)
     setLoading(false)
+    return
   }
+
+  const { data, error } = await supabase
+    .from('topics')
+    .select('*')
+    .eq('topic_user_id', user.id) // ✅ 나의 토픽만!
+    .order('topic_created_at', { ascending: false })
+
+  if (error) {
+    console.error('fetchTopics error', error)
+  } else if (data) {
+    setTopics(data as Topic[])
+  }
+
+  setLoading(false)
+}
 
   const handleAddTopic = async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -73,7 +87,7 @@ export default function TopicsPage() {
       topic_user_id: user.id,
       topic_name: newTopicName,
       topic_description: newTopicDesc,
-      topic_last_visited_at: null,
+      // topic_last_visited_at: null,
     } as Topic)
 
     setAddLoading(false)
