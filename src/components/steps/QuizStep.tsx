@@ -70,45 +70,47 @@ export default function QuizStep({ paperId }: QuizStepProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">논문 퀴즈</h2>
-      <div className="space-y-4">
-        {quizzes.length > 0 ? (
-          quizzes.map((quiz, index) => (
-            <div key={quiz.quiz_id} className="p-4 bg-blue-50 rounded">
-              <div className="font-semibold mb-2">퀴즈 {index + 1}</div>
-              <div className="space-y-3">
-                <div className="text-gray-800">
-                  {quiz.quiz_question}
-                </div>
-                {quiz.quiz_choices && (
-                  <div className="space-y-2">
-                    {Array.isArray(quiz.quiz_choices) ? (
-                      quiz.quiz_choices.map((choice, choiceIndex) => (
-                        <div key={choiceIndex} className="flex items-center space-x-2">
-                          <input type="radio" name={`quiz-${quiz.quiz_id}`} id={`choice-${quiz.quiz_id}-${choiceIndex}`} />
-                          <label htmlFor={`choice-${quiz.quiz_id}-${choiceIndex}`} className="text-gray-700">
-                            {choice}
-                          </label>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-gray-500">선택지 형식 오류</div>
-                    )}
-                  </div>
-                )}
-                {quiz.quiz_explanation && (
-                  <div className="mt-3 p-2 bg-yellow-50 rounded text-sm text-gray-700">
-                    <strong>해설:</strong> {quiz.quiz_explanation}
-                  </div>
-                )}
+    <div className="h-full overflow-y-auto space-y-4">
+      {quizzes.length > 0 ? (
+        quizzes.map((quiz, index) => (
+          <div key={quiz.quiz_id} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <div className="font-semibold mb-3 text-gray-800">퀴즈 {index + 1}</div>
+            <div className="space-y-3">
+              <div className="text-gray-700 text-sm">
+                {quiz.quiz_question}
               </div>
+              {quiz.quiz_choices && (
+                <div className="space-y-2">
+                  {Array.isArray(quiz.quiz_choices) ? (
+                    quiz.quiz_choices.map((choice, choiceIndex) => (
+                      <div key={choiceIndex} className="flex items-center space-x-2">
+                        <input 
+                          type="radio" 
+                          name={`quiz-${quiz.quiz_id}`} 
+                          id={`choice-${quiz.quiz_id}-${choiceIndex}`}
+                          className="text-blue-500 focus:ring-blue-500"
+                        />
+                        <label htmlFor={`choice-${quiz.quiz_id}-${choiceIndex}`} className="text-gray-700 text-sm">
+                          {choice}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-sm">선택지 형식 오류</div>
+                  )}
+                </div>
+              )}
+              {quiz.quiz_explanation && (
+                <div className="mt-3 p-3 bg-yellow-50 rounded-lg text-sm text-gray-700 border border-yellow-200">
+                  <strong className="text-yellow-800">해설:</strong> {quiz.quiz_explanation}
+                </div>
+              )}
             </div>
-          ))
-        ) : (
-          <div className="text-gray-500">퀴즈가 없습니다.</div>
-        )}
-      </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-gray-500 text-center py-8">퀴즈가 없습니다.</div>
+      )}
     </div>
   )
 } 

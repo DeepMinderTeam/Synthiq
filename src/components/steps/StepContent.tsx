@@ -12,16 +12,32 @@ interface StepContentProps {
 }
 
 export default function StepContent({ currentStep, paperId }: StepContentProps) {
-  switch (currentStep) {
-    case 'reading':
-      return <ReadingStep paperId={paperId} />
-    case 'summary':
-      return <SummaryStep paperId={paperId} />
-    case 'quiz':
-      return <QuizStep paperId={paperId} />
-    case 'stats':
-      return <StatsStep paperId={paperId} />
-    default:
-      return null
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 'reading':
+        return '논문 읽기'
+      case 'summary':
+        return '논문 요약'
+      case 'quiz':
+        return '논문 퀴즈'
+      case 'stats':
+        return '논문 통계'
+      default:
+        return ''
+    }
   }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
+      <div className="p-4 sm:p-6 border-b border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+      </div>
+      <div className="flex-1 p-4 sm:p-6 overflow-hidden">
+        {currentStep === 'reading' && <ReadingStep paperId={paperId} />}
+        {currentStep === 'summary' && <SummaryStep paperId={paperId} />}
+        {currentStep === 'quiz' && <QuizStep paperId={paperId} />}
+        {currentStep === 'stats' && <StatsStep paperId={paperId} />}
+      </div>
+    </div>
+  )
 } 

@@ -186,45 +186,35 @@ export default function SummaryStep({ paperId }: SummaryStepProps) {
   }
 
   return (
-    <div className="bg-gray-200 p-6 rounded-lg min-h-96">
-      <h3 className="text-lg font-semibold mb-4">논문 요약</h3>
-      
+    <div className="h-full flex flex-col">
       {message && (
-        <div className="mb-4 p-3 bg-blue-100 text-blue-800 rounded">
+        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
           {message}
         </div>
       )}
 
       {/* 액션 버튼들 */}
-      <div className="mb-6 space-y-2">
-        {/* <button
-          onClick={extractPdfText}
-          disabled={extracting}
-          className="w-full px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-green-600"
-        >
-          {extracting ? '텍스트 추출 중...' : 'PDF 텍스트 추출'}
-        </button> */}
-        
+      <div className="mb-4 flex-shrink-0">
         <button
           onClick={generateAISummary}
           disabled={generating}
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600"
+          className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 text-sm font-medium"
         >
-                        {generating ? '정리노트 생성 중...' : '정리노트 생성'}
+          {generating ? '정리노트 생성 중...' : '정리노트 생성'}
         </button>
       </div>
 
       {/* 요약 목록 */}
-      <div className="space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-3">
         {summaries.length > 0 ? (
           summaries.map((summary) => (
-            <div key={summary.summary_id} className="bg-white p-4 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">
+            <div key={summary.summary_id} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded">
                   {summary.summary_type}
                 </span>
               </div>
-              <div className="prose max-w-none">
+              <div className="prose prose-sm max-w-none text-gray-700">
                 <ReactMarkdown>{summary.summary_text}</ReactMarkdown>
               </div>
             </div>

@@ -91,38 +91,37 @@ export default function StatsStep({ paperId }: StatsStepProps) {
   const stats = calculateStats()
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">논문 통계</h2>
+    <div className="h-full flex flex-col">
       {stats ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-green-50 rounded text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.avgScore}%</div>
-            <div className="text-sm text-gray-600">평균 정답률</div>
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="p-4 bg-green-50 rounded-lg text-center border border-green-100">
+            <div className="text-xl font-bold text-green-600">{stats.avgScore}%</div>
+            <div className="text-xs text-gray-600">평균 정답률</div>
           </div>
-          <div className="p-4 bg-blue-50 rounded text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.avgDuration}분</div>
-            <div className="text-sm text-gray-600">평균 소요시간</div>
+          <div className="p-4 bg-blue-50 rounded-lg text-center border border-blue-100">
+            <div className="text-xl font-bold text-blue-600">{stats.avgDuration}분</div>
+            <div className="text-xs text-gray-600">평균 소요시간</div>
           </div>
-          <div className="p-4 bg-purple-50 rounded text-center col-span-2">
-            <div className="text-2xl font-bold text-purple-600">{stats.totalAttempts}</div>
-            <div className="text-sm text-gray-600">총 응시 횟수</div>
+          <div className="p-4 bg-purple-50 rounded-lg text-center border border-purple-100 col-span-2">
+            <div className="text-xl font-bold text-purple-600">{stats.totalAttempts}</div>
+            <div className="text-xs text-gray-600">총 응시 횟수</div>
           </div>
         </div>
       ) : (
-        <div className="text-gray-500">응시 기록이 없습니다.</div>
+        <div className="text-gray-500 text-center py-8">응시 기록이 없습니다.</div>
       )}
       
       {attempts.length > 0 && (
-        <div className="mt-6">
-          <h3 className="font-semibold mb-3">최근 응시 기록</h3>
+        <div className="flex-1 overflow-y-auto">
+          <h3 className="font-semibold mb-3 text-gray-700">최근 응시 기록</h3>
           <div className="space-y-2">
             {attempts.slice(0, 5).map((attempt) => (
-              <div key={attempt.attempt_id} className="p-3 bg-gray-50 rounded text-sm">
+              <div key={attempt.attempt_id} className="p-3 bg-gray-50 rounded-lg text-sm border border-gray-100">
                 <div className="flex justify-between">
-                  <span>점수: {attempt.attempt_score || 0}점</span>
-                  <span>소요시간: {Math.round((attempt.attempt_duration_sec || 0) / 60)}분</span>
+                  <span className="text-gray-700">점수: {attempt.attempt_score || 0}점</span>
+                  <span className="text-gray-700">소요시간: {Math.round((attempt.attempt_duration_sec || 0) / 60)}분</span>
                 </div>
-                <div className="text-gray-500 text-xs">
+                <div className="text-gray-500 text-xs mt-1">
                   {new Date(attempt.attempt_created_at).toLocaleDateString()}
                 </div>
               </div>
