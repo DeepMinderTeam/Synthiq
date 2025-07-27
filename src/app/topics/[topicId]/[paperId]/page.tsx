@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { Tab } from '@headlessui/react'
 import { CheckIcon } from '@heroicons/react/24/solid'
-import { PaperContent, StepContent, ReadingStep } from '@/components'
+import { PaperContent, StepContent, ReadingStep, TopBar } from '@/components'
 import Sidebar from '@/components/Sidebar'
 import { SidebarProvider } from '@/context/SidebarContext'
 
@@ -95,56 +95,59 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
             </Tab.Group>
           </header>
 
-          <main className="flex-1 p-4 sm:p-8">
-            {currentStep === 'reading' ? (
-              // 읽기 단계: PDF만 전체 화면에 표시
-              <div className="w-full h-full">
-                <ReadingStep paperId={paperId} />
-              </div>
-            ) : (
-              // 다른 단계: 2열 레이아웃
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 h-full">
-                {/* Left Panel */}
-                <div className="w-full overflow-hidden bg-white rounded-lg shadow-sm">
-                  <PaperContent paperId={paperId} />
+          <main className="flex-1">
+            <TopBar />
+            <div className="p-4 sm:p-8">
+              {currentStep === 'reading' ? (
+                // 읽기 단계: PDF만 전체 화면에 표시
+                <div className="w-full h-full">
+                  <ReadingStep paperId={paperId} />
                 </div>
+              ) : (
+                // 다른 단계: 2열 레이아웃
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 h-full">
+                  {/* Left Panel */}
+                  <div className="w-full overflow-hidden bg-white rounded-lg shadow-sm">
+                    <PaperContent paperId={paperId} />
+                  </div>
 
-                {/* Right Panel */}
-                <div className="w-full overflow-hidden">
-                  <StepContent 
-                    currentStep={currentStep}
-                    paperId={paperId}
-                  />
+                  {/* Right Panel */}
+                  <div className="w-full overflow-hidden">
+                    <StepContent 
+                      currentStep={currentStep}
+                      paperId={paperId}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-              <button
-                onClick={() => {
-                  const currentIndex = getCurrentStepIndex()
-                  if (currentIndex > 0) {
-                    setCurrentStep(steps[currentIndex - 1].key)
-                  }
-                }}
-                disabled={currentStep === 'reading'}
-                className="px-6 py-3 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm font-medium shadow-sm"
-              >
-                이전 단계
-              </button>
-              <button
-                onClick={() => {
-                  const currentIndex = getCurrentStepIndex()
-                  if (currentIndex < steps.length - 1) {
-                    setCurrentStep(steps[currentIndex + 1].key)
-                  }
-                }}
-                disabled={currentStep === 'stats'}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm"
-              >
-                다음 단계
-              </button>
+              {/* Navigation Buttons */}
+              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    const currentIndex = getCurrentStepIndex()
+                    if (currentIndex > 0) {
+                      setCurrentStep(steps[currentIndex - 1].key)
+                    }
+                  }}
+                  disabled={currentStep === 'reading'}
+                  className="px-6 py-3 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm font-medium shadow-sm"
+                >
+                  이전 단계
+                </button>
+                <button
+                  onClick={() => {
+                    const currentIndex = getCurrentStepIndex()
+                    if (currentIndex < steps.length - 1) {
+                      setCurrentStep(steps[currentIndex + 1].key)
+                    }
+                  }}
+                  disabled={currentStep === 'stats'}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm"
+                >
+                  다음 단계
+                </button>
+              </div>
             </div>
           </main>
         </div>

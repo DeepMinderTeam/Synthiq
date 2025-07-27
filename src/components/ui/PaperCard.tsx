@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Settings as CogIcon } from 'lucide-react'
+import { Settings as CogIcon, Star, FileText, Calendar } from 'lucide-react'
 
 interface PaperCardProps {
   title: string
@@ -10,6 +10,8 @@ interface PaperCardProps {
   thumbnailUrl?: string
   onEdit: () => void
   onDelete: () => void
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
 }
 
 export default function PaperCard({
@@ -19,6 +21,8 @@ export default function PaperCard({
   thumbnailUrl = '/placeholder.png',
   onEdit,
   onDelete,
+  isFavorite = false,
+  onToggleFavorite,
 }: PaperCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -35,57 +39,100 @@ export default function PaperCard({
   }, [menuOpen])
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-visible relative flex flex-col h-60">
-      {/* 상단: 요약 + 썸네일 */}
-      <div className="flex-1 p-4 flex">
-        <p className="flex-1 text-sm text-gray-600 overflow-hidden line-clamp-4">
-          {description || '요약이 없습니다.'}
-        </p>
-        <img
-          src={thumbnailUrl}
-          alt="썸네일"
-          className="w-24 h-24 object-cover rounded ml-4 flex-shrink-0"
-        />
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col">
+      {/* 상단: 제목과 즐겨찾기 */}
+      <div className="p-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                {title}
+              </h3>
+              <div className="flex items-center space-x-2 mt-1">
+                <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-500 truncate">{date}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* 즐겨찾기 버튼 */}
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleFavorite()
+              }}
+              className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+                isFavorite 
+                  ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+              }`}
+              aria-label="즐겨찾기 토글"
+            >
+              <Star className="w-4 h-4" fill={isFavorite ? 'currentColor' : 'none'} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 하단: 제목·날짜·메뉴 */}
-      <div className="px-4 py-2 border-t flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="text-xs text-gray-400 mt-0.5">{date}</p>
-        </div>
+      {/* 중간: 설명 */}
+      <div className="p-4 flex-1 min-h-0">
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+          {description || '논문 설명이 없습니다.'}
+        </p>
+      </div>
 
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="논문 설정 메뉴 열기"
-          >
-            <CogIcon className="w-5 h-5 text-gray-500" />
-          </button>
+      {/* 하단: 액션 버튼들 */}
+      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 min-w-0">
+            {isFavorite && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex-shrink-0">
+                즐겨찾기
+              </span>
+            )}
+          </div>
 
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
-              <button
-                onClick={() => {
-                  onEdit()
-                  setMenuOpen(false)
-                }}
-                className="w-full text-center px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                수정하기
-              </button>
-              <button
-                onClick={() => {
-                  onDelete()
-                  setMenuOpen(false)
-                }}
-                className="w-full text-center px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
-              >
-                삭제하기
-              </button>
-            </div>
-          )}
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setMenuOpen((v) => !v)
+              }}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="논문 설정 메뉴 열기"
+            >
+              <CogIcon className="w-4 h-4 text-gray-500" />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit()
+                    setMenuOpen(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors first:rounded-t-lg"
+                >
+                  수정하기
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                    setMenuOpen(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors last:rounded-b-lg"
+                >
+                  삭제하기
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

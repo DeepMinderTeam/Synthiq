@@ -8,4 +8,7 @@ export * from './steps'
 export * from './ui'
 
 // 기타 컴포넌트
+export { default as Header } from './Header'
+export { default as TopBar } from './TopBar'
+export { default as Sidebar } from './Sidebar'
 export { default as PaperContent } from './PaperContent' 

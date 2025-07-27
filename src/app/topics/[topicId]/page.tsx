@@ -9,11 +9,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 import type { Paper } from '@/models/paper'
 import Sidebar from '@/components/Sidebar'
-import Header from '@/components/Header'
+import { TopBar, Header } from '@/components'
 import PaperCard from '@/components/ui/PaperCard'
 import EditPaperModal from '@/components/modals/EditPaperModal'
 import { PdfUploadModal } from '@/components'
 import { ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { FileText, Calendar, Star } from 'lucide-react'
 import { SidebarProvider } from '@/context/SidebarContext'
 
 
@@ -41,13 +42,15 @@ export default function TopicPage() {
   // 논문 리스트 상태
   const [papers, setPapers] = useState<Paper[]>([])
   const [papersLoading, setPapersLoading] = useState(true)
+  const [favorites, setFavorites] = useState<number[]>([])
 
   // 수정 중인 논문
   const [editingPaper, setEditingPaper] = useState<Paper | null>(null)
 
-  // 검색 / 뷰모드
+  // 검색 / 뷰모드 / 정렬
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [sortMode, setSortMode] = useState<'name' | 'created'>('created')
 
   // 인증 체크
   useEffect(() => {
@@ -72,8 +75,46 @@ export default function TopicPage() {
       }
       setPapersLoading(false)
     }
-    if (user) fetchPapers()
+    if (user) {
+      fetchPapers()
+      fetchFavorites()
+    }
   }, [user, topicId])
+
+  // 즐겨찾기 불러오기
+  const fetchFavorites = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return
+
+    const { data, error: favErr } = await supabase
+      .from('paper_favorites')
+      .select('fav_paper_id')
+      .eq('fav_user_id', user.id)
+
+    if (!favErr && data) setFavorites(data.map(row => row.fav_paper_id))
+  }
+
+  // 즐겨찾기 토글
+  const toggleFavorite = async (paperId: number) => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return
+
+    const exists = favorites.includes(paperId)
+    if (exists) {
+      await supabase
+        .from('paper_favorites')
+        .delete()
+        .eq('fav_user_id', user.id)
+        .eq('fav_paper_id', paperId)
+    } else {
+      await supabase.from('paper_favorites').insert({
+        fav_user_id: user.id,
+        fav_paper_id: paperId,
+        fav_created_at: new Date().toISOString(),
+      })
+    }
+    fetchFavorites()
+  }
 
   const refreshPapers = async () => {
     setPapersLoading(true)
@@ -109,24 +150,32 @@ export default function TopicPage() {
     setTimeout(() => setMessage(null), 5000)
   }
 
-  // 검색 필터
-  const filteredPapers = papers.filter(p =>
-    p.paper_title.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // 검색 필터 및 정렬
+  const filteredPapers = papers
+    .filter(p => p.paper_title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortMode === 'name') return a.paper_title.localeCompare(b.paper_title)
+      return new Date(b.paper_created_at).getTime() - new Date(a.paper_created_at).getTime()
+    })
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
         <Sidebar userName={userName} />
 
-        <main className="flex-1 bg-gray-50 p-6">
-        <Header
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          onOpenModal={() => setIsUploadModalOpen(true)}
-        />
+        <main className="flex-1 bg-gray-50">
+          <TopBar />
+          <div className="p-6">
+            <Header
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              onOpenModal={() => setIsUploadModalOpen(true)}
+              sortMode={sortMode}
+              setSortMode={setSortMode}
+              buttonText="PDF 등록"
+            />
 
         {message && (
           <div
@@ -185,53 +234,86 @@ export default function TopicPage() {
                             .then(refreshPapers)
                         }
                       }}
+                      isFavorite={favorites.includes(paper.paper_id)}
+                      onToggleFavorite={() => toggleFavorite(paper.paper_id)}
                     />
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="overflow-x-auto bg-white rounded shadow">
-                <table className="min-w-full table-auto">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-2 text-left">논문 제목</th>
-                      <th className="px-4 py-2 text-left">생성일</th>
-                      <th className="px-4 py-2 text-left">URL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPapers.map(paper => (
-                      <tr
-                        key={paper.paper_id}
-                        className="border-t hover:bg-gray-50 cursor-pointer"
-                        onClick={e => {
-                          const tgt = e.target as HTMLElement
-                          if (tgt.closest('button') || tgt.closest('a')) return
-                          router.push(`/topics/${topicId}/${paper.paper_id}`)
-                        }}
-                      >
-                        <td className="px-4 py-3 text-blue-600 underline">
-                          {paper.paper_title}
-                        </td>
-                        <td className="px-4 py-3">{paper.paper_created_at.slice(0, 10)}</td>
-                        <td className="px-4 py-3">
-                          {paper.paper_url ? (
-                            <a
-                              href={paper.paper_url}
-                              target="_blank"
-                              onClick={e => e.stopPropagation()}
-                              className="text-blue-600 underline"
-                            >
-                              열기
-                            </a>
-                          ) : (
-                            '-'
-                          )}
-                        </td>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-2/3">
+                          논문 정보
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                          생성일
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">
+                          즐겨찾기
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white">
+                      {filteredPapers.map(paper => (
+                        <tr
+                          key={paper.paper_id}
+                          className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
+                          onClick={e => {
+                            const tgt = e.target as HTMLElement
+                            if (tgt.closest('button') || tgt.closest('a')) return
+                            router.push(`/topics/${topicId}/${paper.paper_id}`)
+                          }}
+                        >
+                          <td className="px-6 py-5 w-2/3">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+                                <FileText className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                                  {paper.paper_title}
+                                </h3>
+                                {paper.paper_abstract && (
+                                  <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+                                    {paper.paper_abstract}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 w-1/4">
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-sm text-gray-700 truncate">
+                                {paper.paper_created_at.slice(0, 10)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 w-1/12">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleFavorite(paper.paper_id)
+                              }}
+                              className={`p-2 rounded-lg transition-all duration-200 ${
+                                favorites.includes(paper.paper_id)
+                                  ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                              }`}
+                              aria-label="즐겨찾기 토글"
+                            >
+                              <Star className="w-4 h-4" fill={favorites.includes(paper.paper_id) ? 'currentColor' : 'none'} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )
           ) : (
@@ -259,7 +341,8 @@ export default function TopicPage() {
             }}
           />
         )}
-      </main>
+          </div>
+        </main>
       </div>
     </SidebarProvider>
   )

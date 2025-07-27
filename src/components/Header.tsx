@@ -4,7 +4,6 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Squares2X2Icon, Bars3Icon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
-import LogoutButton from '@/components/ui/LogoutButton'
 
 interface HeaderProps {
   searchQuery: string
@@ -12,6 +11,9 @@ interface HeaderProps {
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
   onOpenModal: () => void
+  sortMode?: 'name' | 'created'
+  setSortMode?: (mode: 'name' | 'created') => void
+  buttonText?: string
 }
 
 export default function Header({
@@ -20,6 +22,9 @@ export default function Header({
   viewMode,
   setViewMode,
   onOpenModal,
+  sortMode,
+  setSortMode,
+  buttonText = '토픽 추가',
 }: HeaderProps) {
   const router = useRouter()
 
@@ -48,7 +53,7 @@ export default function Header({
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <PlusIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">토픽 추가</span>
+            <span className="text-sm font-medium">{buttonText}</span>
           </button>
 
           {/* 뷰 모드 토글 */}
@@ -77,10 +82,21 @@ export default function Header({
             </button>
           </div>
 
-          {/* 로그아웃 버튼 */}
-          <div className="border-l border-gray-200 pl-3">
-            <LogoutButton />
-          </div>
+          {/* 정렬 옵션 */}
+          {sortMode && setSortMode && (
+            <div className="flex items-center">
+              <select
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value as 'name' | 'created')}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              >
+                <option value="created">최신순</option>
+                <option value="name">이름순</option>
+              </select>
+            </div>
+          )}
+
+
         </div>
       </div>
     </header>

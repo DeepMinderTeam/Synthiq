@@ -67,69 +67,86 @@ export default function TopicCard({
 
   return (
     <div 
-      className="relative bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 p-6 hover:cursor-pointer group"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col hover:cursor-pointer"
       onClick={handleCardClick}
     >
-      {/* 즐겨찾기 버튼 */}
-      <button
-        onClick={(e) => handleButtonClick(e, handleFavoriteClick)}
-        aria-label="즐겨찾기 토글"
-        className={
-          `absolute top-3 right-3 p-2 rounded-full transition-all duration-200
-          ${fav ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`
-        }
-      >
-        <StarIcon
-          className="w-4 h-4"
-          fill={fav ? 'currentColor' : 'none'}
-          stroke="currentColor"
-        />
-      </button>
-
-      {/* 설정 메뉴 토글 */}
-      <button
-        onClick={(e) => handleButtonClick(e, () => setMenuOpen((o) => !o))}
-        aria-label="설정 메뉴 열기"
-        className="absolute top-3 right-12 p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
-      >
-        <CogIcon className="w-4 h-4" />
-      </button>
-
-      {/* 설정 드롭다운 메뉴 */}
-      {menuOpen && (
-        <div
-          ref={menuRef}
-          className="absolute top-12 right-12 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col text-sm z-10"
-        >
+      {/* 상단: 제목과 즐겨찾기 */}
+      <div className="p-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                {title}
+              </h3>
+              <div className="flex items-center space-x-2 mt-1">
+                <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-500 truncate">{date}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* 즐겨찾기 버튼 */}
           <button
-            onClick={(e) => handleButtonClick(e, () => { setMenuOpen(false); onEdit() })}
-            className="px-4 py-2 hover:bg-gray-50 text-left transition-colors"
+            onClick={(e) => handleButtonClick(e, handleFavoriteClick)}
+            className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+              fav 
+                ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+            }`}
+            aria-label="즐겨찾기 토글"
           >
-            수정
-          </button>
-          <button
-            onClick={(e) => handleButtonClick(e, () => { setMenuOpen(false); onDelete() })}
-            className="px-4 py-2 hover:bg-gray-50 text-left text-red-500 transition-colors"
-          >
-            삭제
+            <StarIcon className="w-4 h-4" fill={fav ? 'currentColor' : 'none'} />
           </button>
         </div>
-      )}
+      </div>
 
-      {/* 카드 내용 */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{title}</h3>
-        </div>
-        
-        {description && (
-          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{description}</p>
-        )}
-        
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <Calendar className="w-4 h-4" />
-          <span>{date}</span>
+      {/* 중간: 설명 */}
+      <div className="p-4 flex-1 min-h-0">
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+          {description || '토픽 설명이 없습니다.'}
+        </p>
+      </div>
+
+      {/* 하단: 액션 버튼들 */}
+      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 min-w-0">
+            {fav && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex-shrink-0">
+                즐겨찾기
+              </span>
+            )}
+          </div>
+
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              onClick={(e) => handleButtonClick(e, () => setMenuOpen((o) => !o))}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="토픽 설정 메뉴 열기"
+            >
+              <CogIcon className="w-4 h-4 text-gray-500" />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
+                <button
+                  onClick={(e) => handleButtonClick(e, () => { setMenuOpen(false); onEdit() })}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors first:rounded-t-lg"
+                >
+                  수정하기
+                </button>
+                <button
+                  onClick={(e) => handleButtonClick(e, () => { setMenuOpen(false); onDelete() })}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors last:rounded-b-lg"
+                >
+                  삭제하기
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
