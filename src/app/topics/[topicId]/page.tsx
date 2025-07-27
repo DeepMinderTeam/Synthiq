@@ -1,5 +1,6 @@
 
 //이것만 건들자
+// src/app/topics/[topicId]/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -14,11 +15,11 @@ import EditPaperModal from '@/components/modals/EditPaperModal'
 import { PdfUploadModal } from '@/components'
 import { ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 
+
 export default function TopicPage() {
   const params = useParams()
   const router = useRouter()
   const { user, loading } = useAuth()
-
   const topicId = params.topicId as string
 
   // Sidebar에 표시할 사용자명
@@ -217,6 +218,7 @@ export default function TopicPage() {
                               href={paper.paper_url}
                               target="_blank"
                               onClick={e => e.stopPropagation()}
+                              className="text-blue-600 underline"
                             >
                               열기
                             </a>
@@ -237,6 +239,7 @@ export default function TopicPage() {
           )}
         </div>
 
+        {/* 수정 모달 */}
         {editingPaper && (
           <EditPaperModal
             paper={editingPaper}
