@@ -47,6 +47,7 @@ export default function TopicPage() {
   const [papers, setPapers] = useState<Paper[]>([])
   const [papersLoading, setPapersLoading] = useState(true)
   const [favorites, setFavorites] = useState<number[]>([])
+  const [recentViews, setRecentViews] = useState<number[]>([])
 
   // 수정 중인 논문
   const [editingPaper, setEditingPaper] = useState<Paper | null>(null)
@@ -54,7 +55,7 @@ export default function TopicPage() {
   // 검색 / 뷰모드 / 정렬
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortMode, setSortMode] = useState<'name' | 'created'>('created')
+  const [sortMode, setSortMode] = useState<'name' | 'created' | 'favorite' | 'recent'>('favorite')
 
   // 인증 체크
   useEffect(() => {
@@ -82,6 +83,7 @@ export default function TopicPage() {
     if (user) {
       fetchPapers()
       fetchFavorites()
+      fetchRecentViews()
     }
   }, [user, topicId])
 
@@ -96,6 +98,20 @@ export default function TopicPage() {
       .eq('fav_user_id', user.id)
 
     if (!favErr && data) setFavorites(data.map(row => row.fav_paper_id))
+  }
+
+  // 최근 본 불러오기
+  const fetchRecentViews = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return
+
+    const { data, error: recentErr } = await supabase
+      .from('paper_recent_views')
+      .select('view_paper_id')
+      .eq('view_user_id', user.id)
+      .order('view_last_viewed_at', { ascending: false })
+
+    if (!recentErr && data) setRecentViews(data.map(row => row.view_paper_id))
   }
 
   // 즐겨찾기 토글
@@ -159,7 +175,23 @@ export default function TopicPage() {
     .filter(p => p.paper_title.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
       if (sortMode === 'name') return a.paper_title.localeCompare(b.paper_title)
-      return new Date(b.paper_created_at).getTime() - new Date(a.paper_created_at).getTime()
+      if (sortMode === 'created') return new Date(b.paper_created_at).getTime() - new Date(a.paper_created_at).getTime()
+      if (sortMode === 'favorite') {
+        const aIsFavorite = favorites.includes(a.paper_id)
+        const bIsFavorite = favorites.includes(b.paper_id)
+        if (aIsFavorite && !bIsFavorite) return -1
+        if (!aIsFavorite && bIsFavorite) return 1
+        return a.paper_title.localeCompare(b.paper_title) // 즐겨찾기 내에서는 abc순
+      }
+      if (sortMode === 'recent') {
+        const aIndex = recentViews.indexOf(a.paper_id)
+        const bIndex = recentViews.indexOf(b.paper_id)
+        if (aIndex === -1 && bIndex === -1) return a.paper_title.localeCompare(b.paper_title) // 둘 다 최근 본 적 없으면 abc순
+        if (aIndex === -1) return 1 // a가 최근 본 적 없으면 뒤로
+        if (bIndex === -1) return -1 // b가 최근 본 적 없으면 뒤로
+        return aIndex - bIndex // 최근 본 순서대로
+      }
+      return a.paper_title.localeCompare(b.paper_title) // 기본값
     })
 
   return (

@@ -35,10 +35,20 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
   const [recentTopics, setRecentTopics] = useState<Topic[]>([])
   const [recentPapers, setRecentPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
+  const [isLargeScreen, setIsLargeScreen] = useState(false)
 
   useEffect(() => {
     fetchFavorites()
     fetchRecentViews()
+    
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024)
+    }
+    
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    
+    return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
   const fetchFavorites = async () => {
@@ -163,7 +173,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
       </div>
 
       {/* 고정된 컨텐츠 영역 */}
-      <div className="flex-1 px-6 overflow-y-auto">
+      <div className="flex-1 px-6">
         {/* 최근 본 토픽 */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-3">
@@ -175,7 +185,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           ) : recentTopics.length ? (
             <div className="max-h-32 overflow-y-auto">
               <ul className="space-y-2">
-                {recentTopics.slice(0, 3).map(topic => (
+                {recentTopics.slice(0, 2).map(topic => (
                   <li
                     key={topic.topic_id}
                     onClick={() => router.push(`/topics/${topic.topic_id}`)}
@@ -203,7 +213,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           ) : recentPapers.length ? (
             <div className="max-h-32 overflow-y-auto">
               <ul className="space-y-2">
-                {recentPapers.slice(0, 3).map(paper => (
+                {recentPapers.slice(0, 2).map(paper => (
                   <li
                     key={paper.paper_id}
                     onClick={() => router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)}
@@ -231,7 +241,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           ) : favoriteTopics.length ? (
             <div className="max-h-40 overflow-y-auto">
               <ul className="space-y-2">
-                {favoriteTopics.slice(0, 5).map(topic => (
+                {favoriteTopics.slice(0, 3).map(topic => (
                   <li
                     key={topic.topic_id}
                     className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
@@ -271,7 +281,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           ) : favoritePapers.length ? (
             <div className="max-h-40 overflow-y-auto">
               <ul className="space-y-2">
-                {favoritePapers.slice(0, 5).map(paper => (
+                {favoritePapers.slice(0, 3).map(paper => (
                   <li
                     key={paper.paper_id}
                     className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"

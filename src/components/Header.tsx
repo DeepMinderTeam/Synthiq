@@ -11,8 +11,8 @@ interface HeaderProps {
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
   onOpenModal: () => void
-  sortMode?: 'name' | 'created'
-  setSortMode?: (mode: 'name' | 'created') => void
+  sortMode?: 'name' | 'created' | 'favorite' | 'recent'
+  setSortMode?: (mode: 'name' | 'created' | 'favorite' | 'recent') => void
   buttonText?: string
 }
 
@@ -87,9 +87,11 @@ export default function Header({
             <div className="flex items-center">
               <select
                 value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as 'name' | 'created')}
+                onChange={(e) => setSortMode(e.target.value as 'name' | 'created' | 'favorite' | 'recent')}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               >
+                <option value="favorite">즐겨찾기순</option>
+                <option value="recent">최근 본 순</option>
                 <option value="created">최신순</option>
                 <option value="name">이름순</option>
               </select>

@@ -28,10 +28,11 @@ export default function TopicsPage() {
   const [userEmail, setUserEmail] = useState<string>('')
   const [topics, setTopics] = useState<Topic[]>([])
   const [favorites, setFavorites] = useState<number[]>([])
+  const [recentViews, setRecentViews] = useState<number[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortMode, setSortMode] = useState<'name' | 'created'>('created')
+  const [sortMode, setSortMode] = useState<'name' | 'created' | 'favorite' | 'recent'>('favorite')
   const [showAddModal, setShowAddModal] = useState<boolean>(false)
   const [addLoading, setAddLoading] = useState<boolean>(false)
   const [addError, setAddError] = useState<string | null>(null)
@@ -50,6 +51,7 @@ export default function TopicsPage() {
     loadUser()
     fetchTopics()
     fetchFavorites()
+    fetchRecentViews()
   }, [])
 
   const fetchTopics = async () => {
@@ -76,6 +78,19 @@ export default function TopicsPage() {
       .eq('fav_user_id', user.id)
 
     if (!favErr && data) setFavorites(data.map(row => row.fav_topic_id))
+  }
+
+  const fetchRecentViews = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return
+
+    const { data, error: recentErr } = await supabase
+      .from('topic_recent_views')
+      .select('view_topic_id')
+      .eq('view_user_id', user.id)
+      .order('view_last_viewed_at', { ascending: false })
+
+    if (!recentErr && data) setRecentViews(data.map(row => row.view_topic_id))
   }
 
   const toggleFavorite = async (topicId: number) => {
@@ -147,7 +162,23 @@ export default function TopicsPage() {
     .filter(t => t.topic_name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
       if (sortMode === 'name') return a.topic_name.localeCompare(b.topic_name)
-      return new Date(b.topic_created_at).getTime() - new Date(a.topic_created_at).getTime()
+      if (sortMode === 'created') return new Date(b.topic_created_at).getTime() - new Date(a.topic_created_at).getTime()
+      if (sortMode === 'favorite') {
+        const aIsFavorite = favorites.includes(a.topic_id)
+        const bIsFavorite = favorites.includes(b.topic_id)
+        if (aIsFavorite && !bIsFavorite) return -1
+        if (!aIsFavorite && bIsFavorite) return 1
+        return a.topic_name.localeCompare(b.topic_name) // 즐겨찾기 내에서는 abc순
+      }
+      if (sortMode === 'recent') {
+        const aIndex = recentViews.indexOf(a.topic_id)
+        const bIndex = recentViews.indexOf(b.topic_id)
+        if (aIndex === -1 && bIndex === -1) return a.topic_name.localeCompare(b.topic_name) // 둘 다 최근 본 적 없으면 abc순
+        if (aIndex === -1) return 1 // a가 최근 본 적 없으면 뒤로
+        if (bIndex === -1) return -1 // b가 최근 본 적 없으면 뒤로
+        return aIndex - bIndex // 최근 본 순서대로
+      }
+      return a.topic_name.localeCompare(b.topic_name) // 기본값
     })
 
   return (
