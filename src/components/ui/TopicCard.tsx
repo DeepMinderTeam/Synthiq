@@ -1,15 +1,17 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Settings as CogIcon } from 'lucide-react'
+import { Star as StarIcon, Settings as CogIcon } from 'lucide-react'
 
-interface TopicCardProps {
+export interface TopicCardProps {
   title: string
   description?: string
   date: string
   thumbnailUrl?: string
   onEdit: () => void
   onDelete: () => void
+  isFavorite: boolean
+  onToggleFavorite: () => void
 }
 
 export default function TopicCard({
@@ -19,81 +21,86 @@ export default function TopicCard({
   thumbnailUrl = '/placeholder.png',
   onEdit,
   onDelete,
+  isFavorite,
+  onToggleFavorite,
 }: TopicCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [fav, setFav] = useState(isFavorite)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // 메뉴 바깥 클릭 시 닫기
+  // Prop 변경 시 로컬 fav 상태 동기화
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    setFav(isFavorite)
+  }, [isFavorite])
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false)
       }
     }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
 
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [menuOpen])
+  // 즐겨찾기 버튼 핸들러 (즉시 UI 반영)
+  const handleFavoriteClick = () => {
+    setFav((prev) => !prev)
+    onToggleFavorite()
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-visible relative flex flex-col h-60">
-      {/* 상단: 요약 + 썸네일 */}
-      <div className="flex-1 p-4 flex">
-        <p className="flex-1 text-sm text-gray-600 overflow-hidden line-clamp-4">
-          {description || '요약이 없습니다.'}
-        </p>
-        <img
-          src={thumbnailUrl}
-          alt="썸네일"
-          className="w-24 h-24 object-cover rounded ml-4 flex-shrink-0"
+    <div className="relative bg-white border rounded-lg shadow hover:border-blue-500 hover:shadow-md transition p-4 hover:cursor-pointer">
+      {/* 즐겨찾기 버튼 */}
+      <button
+        onClick={handleFavoriteClick}
+        aria-label="즐겨찾기 토글"
+        className={
+          `absolute top-2 right-2 p-1 rounded-full transition
+          ${fav ? 'bg-yellow-200 text-yellow-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`
+        }
+      >
+        <StarIcon
+          className="w-5 h-5"
+          fill={fav ? 'currentColor' : 'none'}
+          stroke="currentColor"
         />
-      </div>
+      </button>
 
-      {/* 하단: 제목·날짜·메뉴 */}
-      <div className="px-4 py-2 border-t flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="text-xs text-gray-400 mt-0.5">{date}</p>
-        </div>
+      {/* 설정 메뉴 토글 */}
+      <button
+        onClick={() => setMenuOpen((o) => !o)}
+        aria-label="설정 메뉴 열기"
+        className="absolute top-2 right-10 p-1 rounded-full text-gray-500 hover:bg-gray-100 transition"
+      >
+        <CogIcon className="w-5 h-5" />
+      </button>
 
-        <div className="relative" ref={menuRef}>
+      {/* 설정 드롭다운 메뉴 */}
+      {menuOpen && (
+        <div
+          ref={menuRef}
+          className="absolute top-8 right-10 bg-white border rounded shadow-md flex flex-col text-sm"
+        >
           <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="토픽 설정 메뉴 열기"
+            onClick={() => { setMenuOpen(false); onEdit() }}
+            className="px-4 py-2 hover:bg-gray-100 text-left"
           >
-            <CogIcon className="w-5 h-5 text-gray-500" />
+            수정
           </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
-              <button
-                onClick={() => {
-                  onEdit()
-                  setMenuOpen(false)
-                }}
-                className="w-full text-center px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                 수정하기
-              </button>
-              <button
-                onClick={() => {
-                  onDelete()
-                  setMenuOpen(false)
-                }}
-                className="w-full text-center px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
-              >
-                 삭제하기
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => { setMenuOpen(false); onDelete() }}
+            className="px-4 py-2 hover:bg-gray-100 text-left text-red-500"
+          >
+            삭제
+          </button>
         </div>
-      </div>
+      )}
+
+      <h3 className="text-lg font-bold mb-2 mt-6">{title}</h3>
+      <p className="text-sm text-gray-600 line-clamp-3 mb-2">{description}</p>
+      <p className="text-xs text-gray-400 mb-4">{date}</p>
     </div>
   )
 }
