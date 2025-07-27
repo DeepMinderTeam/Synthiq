@@ -36,7 +36,7 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
     if (activeTab === 'self' && summaries.length > 0) {
       // 기존 사용자 요약이 있으면 로드
       if (summaries[0].summary_text_self) {
-        setSelfSummary(summaries[0].summary_text_self)
+      setSelfSummary(summaries[0].summary_text_self)
       } else {
         // 기존 사용자 요약이 없으면 빈 문자열로 초기화
         setSelfSummary('')
@@ -219,7 +219,7 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
       }
 
       const result = await response.json()
-      
+
       if (showMessage) {
         setMessage('✅ 사용자 요약이 저장되었습니다!')
         setTimeout(() => setMessage(null), 2000)

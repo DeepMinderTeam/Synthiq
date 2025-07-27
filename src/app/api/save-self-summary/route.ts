@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
 
         if (createError) {
           console.error('새 요약 생성 오류:', createError)
-          return NextResponse.json(
+        return NextResponse.json(
             { error: '새 요약을 생성할 수 없습니다.' },
             { status: 500 }
-          )
+        )
         }
 
         return NextResponse.json({ 

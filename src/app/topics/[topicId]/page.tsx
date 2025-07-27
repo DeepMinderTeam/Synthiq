@@ -230,16 +230,16 @@ export default function TopicPage() {
         <main className="flex-1 bg-gray-50 overflow-y-auto">
           <TopBar />
           <div className="p-6">
-            <Header
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
+        <Header
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
               onOpenModal={() => setIsUploadModalOpen(true)}
               sortMode={sortMode}
               setSortMode={setSortMode}
               buttonText="PDF 등록"
-            />
+        />
 
         {message && (
           <div
@@ -310,7 +310,7 @@ export default function TopicPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full table-fixed">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                      <tr>
+                    <tr>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-2/3">
                           논문 정보
                         </th>
@@ -320,20 +320,20 @@ export default function TopicPage() {
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">
                           즐겨찾기
                         </th>
-                      </tr>
-                    </thead>
+                    </tr>
+                  </thead>
                     <tbody className="bg-white">
-                      {filteredPapers.map(paper => (
-                        <tr
-                          key={paper.paper_id}
+                    {filteredPapers.map(paper => (
+                      <tr
+                        key={paper.paper_id}
                           className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
-                          onClick={e => {
-                            const tgt = e.target as HTMLElement
-                            if (tgt.closest('button') || tgt.closest('a')) return
+                        onClick={e => {
+                          const tgt = e.target as HTMLElement
+                          if (tgt.closest('button') || tgt.closest('a')) return
                             updateRecentView('paper', paper.paper_id)
-                            router.push(`/topics/${topicId}/${paper.paper_id}`)
-                          }}
-                        >
+                          router.push(`/topics/${topicId}/${paper.paper_id}`)
+                        }}
+                      >
                           <td className="px-6 py-5 w-2/3">
                             <div className="flex items-center space-x-4">
                               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
@@ -341,7 +341,7 @@ export default function TopicPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                                  {paper.paper_title}
+                          {paper.paper_title}
                                 </h3>
                                 {paper.paper_abstract && (
                                   <p className="mt-1 text-sm text-gray-600 line-clamp-2">
@@ -358,7 +358,7 @@ export default function TopicPage() {
                                 {paper.paper_created_at.slice(0, 10)}
                               </span>
                             </div>
-                          </td>
+                        </td>
                           <td className="px-6 py-5 w-1/12">
                             <button
                               onClick={(e) => {
@@ -374,11 +374,11 @@ export default function TopicPage() {
                             >
                               <Star className="w-4 h-4" fill={favorites.includes(paper.paper_id) ? 'currentColor' : 'none'} />
                             </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
                 </div>
               </div>
             )
@@ -408,8 +408,8 @@ export default function TopicPage() {
           />
         )}
           </div>
-        </main>
-      </div>
+      </main>
+    </div>
     </SidebarProvider>
   )
 }

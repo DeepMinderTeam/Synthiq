@@ -203,11 +203,11 @@ export default function StatsStep({ paperId }: StatsStepProps) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-              <div className="h-8 bg-gray-300 rounded animate-pulse mb-2" />
+            <div className="h-8 bg-gray-300 rounded animate-pulse mb-2" />
               <div className="text-sm text-gray-600">로딩 중...</div>
-            </div>
+          </div>
           ))}
-        </div>
+          </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
           <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
@@ -422,7 +422,7 @@ export default function StatsStep({ paperId }: StatsStepProps) {
             <Bar data={timeDistributionData} options={lineChartOptions} />
           </div>
         </div>
-      </div>
+              </div>
 
       {/* 라인 차트 섹션 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -434,8 +434,8 @@ export default function StatsStep({ paperId }: StatsStepProps) {
           </h3>
           <div className="h-64">
             <Line data={dailyAttemptsData} options={lineChartOptions} />
-          </div>
-        </div>
+            </div>
+            </div>
 
         {/* 점수 추이 */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -448,7 +448,7 @@ export default function StatsStep({ paperId }: StatsStepProps) {
           </div>
         </div>
       </div>
-
+      
       {/* 최근 응시 기록 */}
       {attempts.length > 0 && (
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -492,7 +492,7 @@ export default function StatsStep({ paperId }: StatsStepProps) {
                   }`}>
                     {(attempt.attempt_score || 0) >= 80 ? '우수' : 
                      (attempt.attempt_score || 0) >= 60 ? '양호' : '개선 필요'}
-                  </div>
+                </div>
                 </div>
               </div>
             ))}

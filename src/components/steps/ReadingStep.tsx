@@ -10,7 +10,7 @@ interface ReadingStepProps {
 
 export default function ReadingStep({ paperId }: ReadingStepProps) {
   return (
-    <div className="h-full">
+          <div className="h-full">
       <PaperContent paperId={paperId} />
     </div>
   )
