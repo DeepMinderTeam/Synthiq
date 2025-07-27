@@ -1,5 +1,5 @@
 // PDF 관련 컴포넌트
-export * from './pdf'
+export * from './steps/pdf'
 
 // 학습 단계 관련 컴포넌트
 export * from './steps'

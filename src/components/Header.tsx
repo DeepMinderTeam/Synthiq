@@ -2,6 +2,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Squares2X2Icon, Bars3Icon } from '@heroicons/react/24/outline'
 import LogoutButton from '@/components/ui/LogoutButton'
 
@@ -45,13 +46,13 @@ export default function Header({
           onClick={() => setViewMode('grid')}
           className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
         >
-          <GridIcon className="w-5 h-5" />
+          <Squares2X2Icon className="w-5 h-5" />
         </button>
         <button
           onClick={() => setViewMode('list')}
           className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
         >
-          <ListIcon className="w-5 h-5" />
+          <Bars3Icon className="w-5 h-5" />
         </button>
 
         <LogoutButton />

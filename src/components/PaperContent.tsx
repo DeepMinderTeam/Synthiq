@@ -99,27 +99,38 @@ export default function PaperContent({ paperId }: PaperContentProps) {
       <div className="p-4 sm:p-6 border-b border-gray-100">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-800">논문 내용</h3>
-          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => handleTabChange('original')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeTab === 'original'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              📄 원문 보기
-            </button>
-            <button
-              onClick={() => handleTabChange('translation')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeTab === 'translation'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              🌐 번역 보기
-            </button>
+          <div className="flex items-center space-x-3">
+            {activeTab === 'translation' && (
+              <button
+                onClick={handleTranslate}
+                disabled={translating}
+                className="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
+              >
+                {translating ? '번역 중...' : '✨ AI 번역'}
+              </button>
+            )}
+            <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => handleTabChange('original')}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === 'original'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                📄 원문 보기
+              </button>
+              <button
+                onClick={() => handleTabChange('translation')}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === 'translation'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                🌐 번역 보기
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -133,16 +144,6 @@ export default function PaperContent({ paperId }: PaperContentProps) {
       <div className="flex-1 p-4 sm:p-6 overflow-hidden">
         {activeTab === 'translation' ? (
           <div className="h-full flex flex-col">
-            {/* AI 번역 버튼 */}
-            <div className="mb-4 flex-shrink-0 flex justify-end">
-              <button
-                onClick={handleTranslate}
-                disabled={translating}
-                className="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
-              >
-                {translating ? '번역 중...' : '✨ AI 번역'}
-              </button>
-            </div>
             {contents.length > 0 ? (
               <>
                 {/* 페이지네이션 헤더 */}

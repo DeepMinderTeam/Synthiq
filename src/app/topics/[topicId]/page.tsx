@@ -14,6 +14,7 @@ import PaperCard from '@/components/ui/PaperCard'
 import EditPaperModal from '@/components/modals/EditPaperModal'
 import { PdfUploadModal } from '@/components'
 import { ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { SidebarProvider } from '@/context/SidebarContext'
 
 
 export default function TopicPage() {
@@ -114,16 +115,17 @@ export default function TopicPage() {
   )
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar userName={userName} />
+    <SidebarProvider>
+      <div className="flex min-h-screen">
+        <Sidebar userName={userName} />
 
-      <main className="flex-1 bg-gray-50 p-6">
+        <main className="flex-1 bg-gray-50 p-6">
         <Header
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           viewMode={viewMode}
           setViewMode={setViewMode}
-          onToggleAddForm={() => setIsUploadModalOpen(true)}
+          onOpenModal={() => setIsUploadModalOpen(true)}
         />
 
         {message && (
@@ -258,6 +260,7 @@ export default function TopicPage() {
           />
         )}
       </main>
-    </div>
+      </div>
+    </SidebarProvider>
   )
 }
