@@ -11,6 +11,8 @@ import { CheckIcon } from '@heroicons/react/24/solid'
 import { PaperContent, StepContent, ReadingStep, TopBar } from '@/components'
 import Sidebar from '@/components/Sidebar'
 import { SidebarProvider } from '@/context/SidebarContext'
+import { Stepper, Step, StepLabel, StepIcon } from '@mui/material'
+import { styled } from '@mui/material/styles'
 
 const steps: { key: LearningStep; label: string }[] = [
   { key: 'reading', label: '논문 읽기' },
@@ -18,6 +20,58 @@ const steps: { key: LearningStep; label: string }[] = [
   { key: 'quiz', label: '논문 퀴즈' },
   { key: 'stats', label: '논문 통계' }
 ]
+
+// 커스텀 스타일링
+const CustomStepper = styled(Stepper)(({ theme }) => ({
+  '& .MuiStepConnector-root': {
+    top: '25px', // 원의 중앙에 맞춤 (원 크기 50px의 절반)
+    zIndex: 1, // 연결선을 원 아래에 배치
+  },
+  '& .MuiStepConnector-line': {
+    borderColor: '#e5e7eb',
+    borderTopWidth: 3,
+  },
+  '& .MuiStepConnector-root.Mui-active .MuiStepConnector-line': {
+    borderColor: '#8b5cf6',
+    borderTopWidth: 3,
+  },
+  '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
+    borderColor: '#3b82f6',
+    borderTopWidth: 3,
+  },
+}))
+
+interface CustomStepIconProps {
+  completed?: boolean
+  active?: boolean
+}
+
+const CustomStepIcon = styled('div')<CustomStepIconProps>(({ completed, active }) => ({
+  width: 50,
+  height: 50,
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '1.25rem',
+  fontWeight: 'bold',
+  color: completed || active ? '#ffffff' : '#6b7280',
+  background: completed 
+    ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%)'
+    : active 
+      ? 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #8b5cf6 100%)'
+      : '#ffffff',
+  border: completed || active ? '3px solid #e5e7eb' : '3px solid #e5e7eb',
+  boxShadow: completed || active ? '0 10px 25px rgba(139, 92, 246, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s ease',
+  cursor: 'pointer',
+  position: 'relative',
+  zIndex: 10, // 연결선 위에 표시
+  '&:hover': {
+    transform: 'scale(1.1)',
+    boxShadow: '0 15px 35px rgba(139, 92, 246, 0.4)',
+  },
+}))
 
 interface PaperLearningPageProps {
   params: {
@@ -38,65 +92,65 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
     return steps.findIndex(s => s.key === currentStep)
   }
 
+  const handleStepClick = (index: number) => {
+    setCurrentStep(steps[index].key)
+  }
+
   return (
     <SidebarProvider>
       <div className="flex h-screen bg-gray-50">
         <Sidebar userName={user?.name || '사용자'} userEmail={user?.email || ''} />
       
         <div className="flex-1 flex flex-col overflow-y-auto">
-          <header className="bg-white border-b px-4 sm:px-8 py-4 shadow-sm">
-            <div 
-              className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => router.push('/')}
-            >
-              DeepMinder
-            </div>
+          <TopBar />
           
-            {/* Progress Steps with Headless UI */}
-            <Tab.Group selectedIndex={getCurrentStepIndex()} onChange={(index) => setCurrentStep(steps[index].key)}>
-              <Tab.List className="flex space-x-2 rounded-2xl bg-gradient-to-r from-gray-50 to-gray-100 p-2 w-full max-w-4xl mx-auto shadow-inner">
+          <header className="bg-white border-b px-6 py-8 shadow-sm">
+            {/* Material-UI Stepper */}
+            <div className="w-full max-w-4xl mx-auto">
+              <CustomStepper activeStep={getCurrentStepIndex()} alternativeLabel>
                 {steps.map((step, index) => {
                   const isCompleted = index < getCurrentStepIndex()
                   const isCurrent = index === getCurrentStepIndex()
                   
                   return (
-                    <Tab
-                      key={step.key}
-                      className={({ selected }) =>
-                        `flex-1 rounded-xl py-3 px-4 text-sm font-medium leading-5 transition-all duration-300 transform hover:scale-105
-                        ${isCompleted 
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' 
-                          : isCurrent 
-                            ? 'bg-white text-blue-600 shadow-lg border-2 border-blue-200' 
-                            : 'text-gray-500 hover:bg-white hover:text-gray-700 hover:shadow-md'
-                        }`
-                      }
-                    >
-                      <div className="flex items-center justify-center space-x-3">
-                        {isCompleted ? (
-                          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                            <CheckIcon className="w-4 h-4 text-white" />
-                          </div>
-                        ) : (
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                            ${isCurrent 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-gray-300 text-gray-600'
-                            }`}>
-                            {index + 1}
-                          </div>
+                    <Step key={step.key} completed={isCompleted} active={isCurrent}>
+                      <StepLabel
+                        onClick={() => handleStepClick(index)}
+                        sx={{
+                          cursor: 'pointer',
+                          '& .MuiStepLabel-label': {
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: isCompleted ? '#3b82f6' : isCurrent ? '#8b5cf6' : '#6b7280',
+                            '&:hover': {
+                              color: '#8b5cf6',
+                            },
+                          },
+                        }}
+                        StepIconComponent={(props) => (
+                          <CustomStepIcon
+                            completed={isCompleted}
+                            active={isCurrent}
+                            onClick={() => handleStepClick(index)}
+                          >
+                            {isCompleted ? (
+                              <CheckIcon style={{ width: '1.5rem', height: '1.5rem' }} />
+                            ) : (
+                              index + 1
+                            )}
+                          </CustomStepIcon>
                         )}
-                        <span className="hidden sm:inline font-medium">{step.label}</span>
-                      </div>
-                    </Tab>
+                      >
+                        {step.label}
+                      </StepLabel>
+                    </Step>
                   )
                 })}
-              </Tab.List>
-            </Tab.Group>
+              </CustomStepper>
+            </div>
           </header>
 
           <main className="flex-1">
-            <TopBar />
             <div className="p-4 sm:p-8">
               {currentStep === 'reading' ? (
                 // 읽기 단계: PDF만 전체 화면에 표시
