@@ -25,6 +25,7 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   const [selfSummary, setSelfSummary] = useState('')
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [currentSummaryId, setCurrentSummaryId] = useState<number>(0)
 
   useEffect(() => {
     fetchData()
@@ -32,10 +33,38 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
 
   // 나의 정리노트 탭으로 이동할 때 기존 내용 로드
   useEffect(() => {
-    if (activeTab === 'self' && summaries.length > 0 && summaries[0].summary_text_self) {
-      setSelfSummary(summaries[0].summary_text_self)
+    if (activeTab === 'self' && summaries.length > 0) {
+      // 기존 사용자 요약이 있으면 로드
+      if (summaries[0].summary_text_self) {
+        setSelfSummary(summaries[0].summary_text_self)
+      } else {
+        // 기존 사용자 요약이 없으면 빈 문자열로 초기화
+        setSelfSummary('')
+      }
     }
   }, [activeTab, summaries])
+
+  // 컴포넌트 마운트 시 자동으로 사용자 요약 로드
+  useEffect(() => {
+    if (summaries.length > 0) {
+      setCurrentSummaryId(summaries[0].summary_id)
+      
+      // 먼저 localStorage에서 백업된 내용 확인
+      const backupKey = `selfSummary_${paperId}`
+      const backupContent = localStorage.getItem(backupKey)
+      
+      if (summaries[0].summary_text_self) {
+        setSelfSummary(summaries[0].summary_text_self)
+        // 서버에 저장된 내용이 있으면 localStorage 백업 업데이트
+        localStorage.setItem(backupKey, summaries[0].summary_text_self)
+      } else if (backupContent) {
+        // 서버에 저장된 내용이 없지만 localStorage에 백업이 있으면 복원
+        setSelfSummary(backupContent)
+        setMessage('📝 이전에 작성한 내용을 복원했습니다.')
+        setTimeout(() => setMessage(null), 3000)
+      }
+    }
+  }, [summaries, paperId])
 
   const fetchData = async () => {
     try {
@@ -185,18 +214,38 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
       })
 
       if (!response.ok) {
-        throw new Error('사용자 요약 저장에 실패했습니다.')
+        const errorData = await response.json()
+        throw new Error(errorData.error || '사용자 요약 저장에 실패했습니다.')
       }
 
+      const result = await response.json()
+      
       if (showMessage) {
         setMessage('✅ 사용자 요약이 저장되었습니다!')
         setTimeout(() => setMessage(null), 2000)
       }
       
+      // summaryId 업데이트
+      if (result.summaryId) {
+        setCurrentSummaryId(result.summaryId)
+      }
+      
+      // localStorage 백업 정리 (서버에 저장되었으므로)
+      const backupKey = `selfSummary_${paperId}`
+      localStorage.removeItem(backupKey)
+      
       // 데이터 새로고침
       fetchData()
     } catch (err) {
-      setError(err instanceof Error ? err.message : '사용자 요약 저장 중 오류가 발생했습니다.')
+      const errorMessage = err instanceof Error ? err.message : '사용자 요약 저장 중 오류가 발생했습니다.'
+      setError(errorMessage)
+      
+      // 저장 실패 시 3초 후 자동 재시도
+      setTimeout(() => {
+        if (selfSummary.trim()) {
+          saveSelfSummary(summaryId, false)
+        }
+      }, 3000)
     } finally {
       setIsSaving(false)
     }
@@ -206,20 +255,33 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   const handleSelfSummaryChange = (value: string) => {
     setSelfSummary(value)
     
+    // localStorage에 즉시 백업
+    const backupKey = `selfSummary_${paperId}`
+    localStorage.setItem(backupKey, value)
+    
     // 기존 타이머 취소
     if (autoSaveTimer) {
       clearTimeout(autoSaveTimer)
     }
     
-    // 2초 후 자동 저장
+    // 1.5초 후 자동 저장 (더 빠른 응답)
     const timer = setTimeout(() => {
       if (value.trim()) {
-        saveSelfSummary(0, false) // 메시지 없이 저장
+        saveSelfSummary(currentSummaryId, false) // 메시지 없이 저장
       }
-    }, 2000)
+    }, 1500)
     
     setAutoSaveTimer(timer)
   }
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+      }
+    }
+  }, [autoSaveTimer])
 
   if (loading) {
     return (

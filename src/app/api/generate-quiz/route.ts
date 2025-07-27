@@ -4,13 +4,17 @@ import { supabase } from '@/lib/supabaseClient'
 interface QuizGenerationRequest {
   paperId: string
   options: {
-    questionCount: number
-    difficulty: 'easy' | 'medium' | 'hard'
-    questionTypes: {
+    quizCount?: number
+    questionCount?: number
+    difficulty?: 'easy' | 'medium' | 'hard'
+    questionTypes?: {
       multipleChoice: boolean
       shortAnswer: boolean
       essay: boolean
     }
+    includeMultipleChoice?: boolean
+    includeShortAnswer?: boolean
+    includeEssay?: boolean
     timeLimit?: number
     focusPages?: number[] // content_index 기반 페이지 선택
   }
@@ -84,11 +88,31 @@ export async function POST(request: NextRequest) {
 
     console.log('논문 정보:', paper)
 
-    // 3. AI에게 퀴즈 생성 요청
-    const quizPrompt = generateQuizPrompt(paper, paperContents, options)
+    // 3. 옵션 정규화
+    const normalizedOptions = {
+      questionCount: options.quizCount || options.questionCount || 5,
+      difficulty: options.difficulty || 'medium',
+      questionTypes: options.questionTypes || {
+        multipleChoice: options.includeMultipleChoice !== false,
+        shortAnswer: options.includeShortAnswer !== false,
+        essay: options.includeEssay !== false
+      },
+      timeLimit: options.timeLimit,
+      focusPages: options.focusPages
+    }
+
+    // 4. AI에게 퀴즈 생성 요청
+    const quizPrompt = generateQuizPrompt(paper, paperContents, normalizedOptions)
     
     // 실제 AI API 호출 (예: OpenAI, Claude 등)
-    const generatedQuizzes = await generateQuizzesWithAI(quizPrompt, options, paperContents)
+    // 환경 변수가 없으면 더미 데이터 사용
+    let generatedQuizzes
+    if (!process.env.OPENAI_API_KEY) {
+      console.log('OpenAI API 키가 없어서 더미 데이터를 사용합니다.')
+      generatedQuizzes = generateDummyQuizzes(normalizedOptions, paperContents)
+    } else {
+      generatedQuizzes = await generateQuizzesWithAI(quizPrompt, normalizedOptions, paperContents)
+    }
 
     console.log('생성된 퀴즈:', generatedQuizzes.length, '개')
 

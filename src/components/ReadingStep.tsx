@@ -79,7 +79,7 @@ export default function ReadingStep({ paperId }: ReadingStepProps) {
       <h2 className="text-xl font-bold">{paper.paper_title}</h2>
       {paper.paper_abstract && (
         <div className="space-y-2">
-          <h3 className="font-semibold">초록</h3>
+          <h3 className="font-semibold">설명</h3>
           <div className="text-gray-700 whitespace-pre-wrap">
             {paper.paper_abstract}
           </div>

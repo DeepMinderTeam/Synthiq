@@ -11,22 +11,28 @@ import { supabase } from '@/lib/supabaseClient'
 import type { Topic } from '@/models/topics'
 import { useAuthRedirect } from '@/hooks/useAuthRedirect'
 import Sidebar from '@/components/Sidebar'
+import { TopBar, Header } from '@/components'
 import { SidebarProvider } from '@/context/SidebarContext'
 import TopicCard from '@/components/ui/TopicCard'
 import EditTopicModal from '@/components/modals/EditTopicModal'
 import AddTopicModal from '@/components/modals/AddTopicModal'
+import { Calendar, Star } from 'lucide-react'
+import { useRecentViews } from '@/hooks/useRecentViews'
 
 export default function TopicsPage() {
   useAuthRedirect()
   const router = useRouter()
+  const { updateRecentView } = useRecentViews()
 
   const [userName, setUserName] = useState<string>('')
+  const [userEmail, setUserEmail] = useState<string>('')
   const [topics, setTopics] = useState<Topic[]>([])
   const [favorites, setFavorites] = useState<number[]>([])
+  const [recentViews, setRecentViews] = useState<number[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortMode, setSortMode] = useState<'name' | 'created' | 'visited'>('created')
+  const [sortMode, setSortMode] = useState<'name' | 'created' | 'favorite' | 'recent'>('favorite')
   const [showAddModal, setShowAddModal] = useState<boolean>(false)
   const [addLoading, setAddLoading] = useState<boolean>(false)
   const [addError, setAddError] = useState<string | null>(null)
@@ -39,11 +45,13 @@ export default function TopicsPage() {
       if (user) {
         const meta = (user as any).user_metadata as Record<string, any>
         setUserName(meta.name ?? user.email ?? '')
+        setUserEmail(user.email ?? '')
       }
     }
     loadUser()
     fetchTopics()
     fetchFavorites()
+    fetchRecentViews()
   }, [])
 
   const fetchTopics = async () => {
@@ -70,6 +78,19 @@ export default function TopicsPage() {
       .eq('fav_user_id', user.id)
 
     if (!favErr && data) setFavorites(data.map(row => row.fav_topic_id))
+  }
+
+  const fetchRecentViews = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return
+
+    const { data, error: recentErr } = await supabase
+      .from('topic_recent_views')
+      .select('view_topic_id')
+      .eq('view_user_id', user.id)
+      .order('view_last_viewed_at', { ascending: false })
+
+    if (!recentErr && data) setRecentViews(data.map(row => row.view_topic_id))
   }
 
   const toggleFavorite = async (topicId: number) => {
@@ -141,39 +162,41 @@ export default function TopicsPage() {
     .filter(t => t.topic_name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
       if (sortMode === 'name') return a.topic_name.localeCompare(b.topic_name)
-      if (sortMode === 'visited') {
-        const aTime = a.topic_last_visited_at ? new Date(a.topic_last_visited_at).getTime() : 0
-        const bTime = b.topic_last_visited_at ? new Date(b.topic_last_visited_at).getTime() : 0
-        return bTime - aTime
+      if (sortMode === 'created') return new Date(b.topic_created_at).getTime() - new Date(a.topic_created_at).getTime()
+      if (sortMode === 'favorite') {
+        const aIsFavorite = favorites.includes(a.topic_id)
+        const bIsFavorite = favorites.includes(b.topic_id)
+        if (aIsFavorite && !bIsFavorite) return -1
+        if (!aIsFavorite && bIsFavorite) return 1
+        return a.topic_name.localeCompare(b.topic_name) // 즐겨찾기 내에서는 abc순
       }
-      return new Date(b.topic_created_at).getTime() - new Date(a.topic_created_at).getTime()
+      if (sortMode === 'recent') {
+        const aIndex = recentViews.indexOf(a.topic_id)
+        const bIndex = recentViews.indexOf(b.topic_id)
+        if (aIndex === -1 && bIndex === -1) return a.topic_name.localeCompare(b.topic_name) // 둘 다 최근 본 적 없으면 abc순
+        if (aIndex === -1) return 1 // a가 최근 본 적 없으면 뒤로
+        if (bIndex === -1) return -1 // b가 최근 본 적 없으면 뒤로
+        return aIndex - bIndex // 최근 본 순서대로
+      }
+      return a.topic_name.localeCompare(b.topic_name) // 기본값
     })
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        <Sidebar userName={userName} />
-        <main className="flex-1 bg-gray-50 p-6">
-          <Header
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            onOpenModal={() => setShowAddModal(true)}
-          />
-
-          <div className="flex justify-end mb-4">
-            <select
-              className="px-3 py-2 border rounded"
-              value={sortMode}
-              onChange={e => setSortMode(e.target.value as any)}
-            >
-              <option value="created">최신순</option>
-              <option value="name">이름순</option>
-              <option value="visited">최근 방문</option>
-            </select>
-
-          </div>
+      <div className="flex h-screen">
+        <Sidebar userName={userName} userEmail={userEmail} />
+        <main className="flex-1 bg-gray-50 overflow-y-auto">
+          <TopBar />
+          <div className="p-6">
+            <Header
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              onOpenModal={() => setShowAddModal(true)}
+              sortMode={sortMode}
+              setSortMode={setSortMode}
+            />
 
           {loading ? (
             <div>로딩 중...</div>
@@ -184,6 +207,7 @@ export default function TopicsPage() {
               {filtered.map(topic => (
                 <TopicCard
                   key={topic.topic_id}
+                  topicId={topic.topic_id.toString()}
                   title={topic.topic_name}
                   description={topic.topic_description || ''}
                   date={topic.topic_created_at.slice(0, 10)}
@@ -191,38 +215,89 @@ export default function TopicsPage() {
                   onDelete={() => handleDeleteTopic(topic.topic_id)}
                   isFavorite={favorites.includes(topic.topic_id)}
                   onToggleFavorite={() => toggleFavorite(topic.topic_id)}
+                  onCardClick={() => {
+                    updateRecentView('topic', topic.topic_id)
+                    router.push(`/topics/${topic.topic_id}`)
+                  }}
                 />
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto bg-white rounded shadow">
-              <table className="min-w-full table-auto border-collapse">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-4 py-2 text-left">토픽명</th>
-                    <th className="border px-4 py-2 text-left">최종 방문일</th>
-                    <th className="border px-4 py-2 text-left">생성일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(topic => (
-                    <tr
-                      key={topic.topic_id}
-                      className="border border-gray-200 hover:border-blue-500 hover:bg-gray-50 transition cursor-pointer"
-                    >
-                      <td className="px-4 py-3">{topic.topic_name}</td>
-                      <td className="px-4 py-3">
-                        {topic.topic_last_visited_at
-                          ? topic.topic_last_visited_at.slice(0, 10)
-                          : '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {topic.topic_created_at.slice(0, 10)}
-                      </td>
+                          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-2/3">
+                        토픽 정보
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                        생성일
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">
+                        즐겨찾기
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white">
+                    {filtered.map((topic, index) => (
+                      <tr
+                        key={topic.topic_id}
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
+                        onClick={() => {
+                          updateRecentView('topic', topic.topic_id)
+                          router.push(`/topics/${topic.topic_id}`)
+                        }}
+                      >
+                        <td className="px-6 py-5 w-2/3">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+                              <span className="text-white font-bold text-lg">
+                                {topic.topic_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                                {topic.topic_name}
+                              </h3>
+                              {topic.topic_description && (
+                                <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+                                  {topic.topic_description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5 w-1/4">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-700 truncate">
+                              {topic.topic_created_at.slice(0, 10)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 w-1/12">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleFavorite(topic.topic_id)
+                            }}
+                            className={`p-2 rounded-lg transition-all duration-200 ${
+                              favorites.includes(topic.topic_id)
+                                ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                            }`}
+                            aria-label="즐겨찾기 토글"
+                          >
+                            <Star className="w-4 h-4" fill={favorites.includes(topic.topic_id) ? 'currentColor' : 'none'} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -241,6 +316,7 @@ export default function TopicsPage() {
               onSave={handleSaveEdit}
             />
           )}
+          </div>
         </main>
       </div>
     </SidebarProvider>
