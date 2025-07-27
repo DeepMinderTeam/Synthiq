@@ -10,7 +10,7 @@ interface HeaderProps {
   onSearchChange: (q: string) => void
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
-  onToggleAddForm: () => void
+  onOpenModal: () => void
 }
 
 export default function Header({
@@ -18,10 +18,10 @@ export default function Header({
   onSearchChange,
   viewMode,
   setViewMode,
-  onToggleAddForm,
+  onOpenModal,
 }: HeaderProps) {
   const router = useRouter()
-  
+
   return (
     <div className="flex items-center justify-between mb-6">
       <h1 
@@ -39,24 +39,20 @@ export default function Header({
           className="border p-2 rounded w-64"
         />
         <button
-          onClick={onToggleAddForm}
+          onClick={onOpenModal}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           토픽 추가하기
         </button>
         <button
           onClick={() => setViewMode('grid')}
-          className={`p-2 rounded ${
-            viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'
-          }`}
+          className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
         >
           <GridIcon className="w-5 h-5" />
         </button>
         <button
           onClick={() => setViewMode('list')}
-          className={`p-2 rounded ${
-            viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'
-          }`}
+          className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
         >
           <ListIcon className="w-5 h-5" />
         </button>
