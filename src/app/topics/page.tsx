@@ -1,10 +1,15 @@
+//전체 주제 리스트 페이지입니다. 메인 대시보드 생각하시면 좋을 것 같습니다.
+//전체 학습 주제 리스트 (ex: AI, 로봇, 네트워크 등)
+//ex) 웹서버구축, 웹프로그래밍, 컴퓨터 구조 ....
+//ex) 주체 추가하기(폴더 추가하기)
+// src/app/topics/page.tsx
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useAuthRedirect } from '@/hooks/useAuthRedirect'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import type { Topic } from '@/models/topics'
-import Header from '@/components/Header'
+import { useAuthRedirect } from '@/hooks/useAuthRedirect'
 import Sidebar from '@/components/Sidebar'
 import { SidebarProvider } from '@/context/SidebarContext'
 import TopicCard from '@/components/ui/TopicCard'
@@ -13,6 +18,7 @@ import AddTopicModal from '@/components/modals/AddTopicModal'
 
 export default function TopicsPage() {
   useAuthRedirect()
+  const router = useRouter()
 
   const [userName, setUserName] = useState<string>('')
   const [topics, setTopics] = useState<Topic[]>([])
@@ -26,11 +32,12 @@ export default function TopicsPage() {
   const [addError, setAddError] = useState<string | null>(null)
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null)
 
+
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const meta = user.user_metadata as Record<string, any>
+        const meta = (user as any).user_metadata as Record<string, any>
         setUserName(meta.name ?? user.email ?? '')
       }
     }
@@ -87,10 +94,12 @@ export default function TopicsPage() {
   }
 
   const handleAddTopic = async (topic: { name: string; description: string }) => {
+
     setAddError(null)
     setAddLoading(true)
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error || !user) {
+
       setAddError('유저 정보를 불러오지 못했습니다.')
       return setAddLoading(false)
     }
@@ -104,6 +113,7 @@ export default function TopicsPage() {
       setAddError('토픽 추가 실패: ' + addErr.message)
     } else {
       setShowAddModal(false)
+
       fetchTopics()
     }
   }
@@ -111,6 +121,7 @@ export default function TopicsPage() {
   const handleDeleteTopic = async (id: number) => {
     if (!confirm('정말 삭제하시겠어요?')) return
     const { error } = await supabase.from('topics').delete().eq('topic_id', id)
+
     if (!error) fetchTopics()
   }
 
@@ -161,6 +172,7 @@ export default function TopicsPage() {
               <option value="name">이름순</option>
               <option value="visited">최근 방문</option>
             </select>
+
           </div>
 
           {loading ? (

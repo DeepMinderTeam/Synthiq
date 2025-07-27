@@ -1,16 +1,17 @@
+// src/components/Header.tsx
 'use client'
 
 import React from 'react'
-import { Grid as GridIcon, List as ListIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Squares2X2Icon, Bars3Icon } from '@heroicons/react/24/outline'
 import LogoutButton from '@/components/ui/LogoutButton'
 
 interface HeaderProps {
   searchQuery: string
-  onSearchChange: (q: string) => void
+  onSearchChange: (value: string) => void
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
   onOpenModal: () => void
+
 }
 
 export default function Header({
@@ -22,21 +23,17 @@ export default function Header({
 }: HeaderProps) {
   const router = useRouter()
 
+
   return (
-    <div className="flex items-center justify-between mb-6">
-      <h1 
-        className="text-2xl font-bold bg-white px-4 py-2 rounded cursor-pointer hover:bg-gray-50 transition-colors"
-        onClick={() => router.push('/')}
-      >
-        DeepMinder
-      </h1>
-      <div className="flex items-center gap-3">
+    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+      {/* 왼쪽: 검색창 */}
+      <div className="flex-1">
         <input
           type="text"
-          placeholder="검색어를 입력하세요"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="border p-2 rounded w-64"
+          placeholder="검색어를 입력하세요..."
+          className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={onOpenModal}
@@ -56,8 +53,9 @@ export default function Header({
         >
           <ListIcon className="w-5 h-5" />
         </button>
+
         <LogoutButton />
       </div>
-    </div>
+    </header>
   )
 }
