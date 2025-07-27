@@ -92,7 +92,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
     <SidebarProvider>
       <div className="flex h-screen bg-gray-50">
         <Sidebar userName={user?.name || '사용자'} userEmail={user?.email || ''} />
-
+      
         <div className="flex-1 flex flex-col overflow-y-auto">
           <TopBar />
 
@@ -100,11 +100,11 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
           <header className="bg-white border-b px-6 py-8 shadow-sm sticky top-0 z-20">
             <div className="w-full max-w-4xl mx-auto">
               <CustomStepper activeStep={getCurrentStepIndex()} alternativeLabel>
-                {steps.map((step, index) => {
-                  const isCompleted = index < getCurrentStepIndex()
-                  const isCurrent = index === getCurrentStepIndex()
-
-                  return (
+            {steps.map((step, index) => {
+              const isCompleted = index < getCurrentStepIndex()
+              const isCurrent = index === getCurrentStepIndex()
+              
+              return (
                     <Step key={step.key} completed={isCompleted} active={isCurrent}>
                       <StepLabel
                         onClick={() => handleStepClick(index)}
@@ -125,31 +125,31 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                             active={isCurrent}
                             onClick={() => handleStepClick(index)}
                           >
-                            {isCompleted ? (
+                    {isCompleted ? (
                               <CheckIcon style={{ width: '1.5rem', height: '1.5rem' }} />
                             ) : (
                               index + 1
-                            )}
+                    )}
                           </CustomStepIcon>
                         )}
                       >
                         {step.label}
                       </StepLabel>
                     </Step>
-                  )
-                })}
+              )
+            })}
               </CustomStepper>
             </div>
-          </header>
+      </header>
 
           {/* Main Content */}
           <main className="flex-1">
             <div className="p-4 sm:p-8">
-              {currentStep === 'reading' ? (
-                <div className="w-full h-full">
-                  <ReadingStep paperId={paperId} />
-                </div>
-              ) : (
+        {currentStep === 'reading' ? (
+            <div className="w-full h-full">
+            <ReadingStep paperId={paperId} />
+          </div>
+        ) : (
                 <div className="flex w-full h-full transition-all duration-500 gap-4">
                   {/* 왼쪽 패널 */}
                   <div
@@ -160,50 +160,50 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                       paperId={paperId}
                       isCollapsed={isCollapsed}
                     />
-                  </div>
+            </div>
 
                   {/* 오른쪽 패널 */}
                   <div
                     className={`overflow-hidden transition-all duration-500 ease-in-out 
                     ${isCollapsed ? 'basis-[94%]' : 'basis-[50%]'}`}
                   >
-                    <StepContent
-                      currentStep={currentStep}
-                      paperId={paperId}
+                <StepContent 
+                  currentStep={currentStep}
+                  paperId={paperId}
                       isPaperContentCollapsed={isCollapsed}
                       onTogglePaperContent={() => setIsCollapsed(!isCollapsed)}
-                    />
-                  </div>
-                </div>
-              )}
+                />
+              </div>
+          </div>
+        )}
 
-              {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                <button
-                  onClick={() => {
+        {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+          <button
+            onClick={() => {
                     const index = getCurrentStepIndex()
                     if (index > 0) setCurrentStep(steps[index - 1].key)
-                  }}
-                  disabled={currentStep === 'reading'}
-                  className="px-6 py-3 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm font-medium shadow-sm"
-                >
-                  이전 단계
-                </button>
-                <button
-                  onClick={() => {
+            }}
+            disabled={currentStep === 'reading'}
+              className="px-6 py-3 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm font-medium shadow-sm"
+          >
+            이전 단계
+          </button>
+          <button
+            onClick={() => {
                     const index = getCurrentStepIndex()
                     if (index < steps.length - 1) setCurrentStep(steps[index + 1].key)
-                  }}
-                  disabled={currentStep === 'stats'}
-                  className="px-6 py-3 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm"
-                >
-                  다음 단계
-                </button>
+            }}
+            disabled={currentStep === 'stats'}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm"
+          >
+            다음 단계
+          </button>
               </div>
-            </div>
-          </main>
         </div>
+      </main>
       </div>
+    </div>
     </SidebarProvider>
   )
 }

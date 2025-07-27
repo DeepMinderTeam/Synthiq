@@ -94,18 +94,18 @@ export default function TopicCard({
             </div>
           </div>
           
-          {/* 즐겨찾기 버튼 */}
-          <button
+      {/* 즐겨찾기 버튼 */}
+      <button
             onClick={(e) => handleButtonClick(e, handleFavoriteClick)}
             className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
               fav 
                 ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
                 : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
             }`}
-            aria-label="즐겨찾기 토글"
-          >
+        aria-label="즐겨찾기 토글"
+      >
             <StarIcon className="w-4 h-4" fill={fav ? 'currentColor' : 'none'} />
-          </button>
+      </button>
         </div>
       </div>
 
@@ -128,30 +128,30 @@ export default function TopicCard({
           </div>
 
           <div className="relative flex-shrink-0" ref={menuRef}>
-            <button
+      <button
               onClick={(e) => handleButtonClick(e, () => setMenuOpen((o) => !o))}
               className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="토픽 설정 메뉴 열기"
-            >
+      >
               <CogIcon className="w-4 h-4 text-gray-500" />
-            </button>
+      </button>
 
-            {menuOpen && (
+      {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
-                <button
+          <button
                   onClick={(e) => handleButtonClick(e, () => { setMenuOpen(false); onEdit() })}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors first:rounded-t-lg"
-                >
+          >
                   수정하기
-                </button>
-                <button
+          </button>
+          <button
                   onClick={(e) => handleButtonClick(e, () => { setMenuOpen(false); onDelete() })}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors last:rounded-b-lg"
-                >
+          >
                   삭제하기
-                </button>
-              </div>
-            )}
+          </button>
+        </div>
+      )}
           </div>
         </div>
       </div>

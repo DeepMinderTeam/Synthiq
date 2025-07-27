@@ -160,27 +160,27 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
                 {translating ? '✨ 번역 중...' : '✨ AI 번역'}
               </button>
             )}
-            <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => handleTabChange('original')}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  activeTab === 'original'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                📄 원문 보기
-              </button>
-              <button
-                onClick={() => handleTabChange('translation')}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  activeTab === 'translation'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                🌐 번역 보기
-              </button>
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => handleTabChange('original')}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === 'original'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              📄 원문 보기
+            </button>
+            <button
+              onClick={() => handleTabChange('translation')}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === 'translation'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              🌐 번역 보기
+            </button>
             </div>
           </div>
         </div>
