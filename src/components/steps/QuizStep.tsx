@@ -579,17 +579,17 @@ export default function QuizStep({ paperId }: QuizStepProps) {
           <div className="overflow-x-auto">
             <div className="flex space-x-2 pb-2 min-w-max">
               {testAttempts.map((attempt, index) => (
-                <button
-                  key={attempt.attempt_id}
-                  onClick={() => viewAttemptHistory(attempt)}
+              <button
+                key={attempt.attempt_id}
+                onClick={() => viewAttemptHistory(attempt)}
                   className={`relative flex-shrink-0 w-40 p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-lg ${
                     currentAttempt?.attempt_id === attempt.attempt_id
                       ? 'border-blue-400 bg-blue-50 shadow-md'
                       : attempt.attempt_id < 0 
                         ? 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50' 
                         : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
-                  }`}
-                >
+                }`}
+              >
                   {/* 회차 번호 - 새 퀴즈가 아닐 때만 표시 */}
                   {attempt.attempt_id >= 0 && (
                     <div className="absolute top-1 left-1 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
@@ -608,17 +608,17 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                   
                   <div className="space-y-2">
                     <div className="font-semibold text-sm text-gray-800 line-clamp-2 pt-2">
-                      {attempt.test_title}
-                    </div>
+                  {attempt.test_title}
+                </div>
                     
                     <div className="text-xs text-gray-600 space-y-1">
-                      {attempt.attempt_id < 0 ? (
+                  {attempt.attempt_id < 0 ? (
                         <div className="flex items-center text-blue-600 font-medium">
                           <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
                           새 퀴즈
                         </div>
-                      ) : (
-                        <>
+                  ) : (
+                    <>
                           <div className="flex items-center justify-between">
                             <span className="text-gray-500">점수:</span>
                             <span className={`font-semibold ${
@@ -628,17 +628,17 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                               {attempt.attempt_score}점
                             </span>
                           </div>
-                          {attempt.attempt_duration_sec > 0 && (
+                      {attempt.attempt_duration_sec > 0 && (
                             <div className="flex items-center justify-between">
                               <span className="text-gray-500">시간:</span>
                               <span className="font-mono text-xs text-gray-700">
                                 {formatTime(attempt.attempt_duration_sec)}
                               </span>
                             </div>
-                          )}
-                        </>
                       )}
-                    </div>
+                    </>
+                  )}
+                </div>
                     
                     <div className="text-xs text-gray-400 pt-1 border-t border-gray-100">
                       {new Date(attempt.attempt_created_at).toLocaleDateString('ko-KR', {
@@ -648,9 +648,9 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                         minute: '2-digit'
                       })}
                     </div>
-                  </div>
-                </button>
-              ))}
+                </div>
+              </button>
+            ))}
             </div>
           </div>
         </div>

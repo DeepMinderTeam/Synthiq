@@ -99,44 +99,44 @@ export default function PaperCard({
                 즐겨찾기
               </span>
             )}
-          </div>
+        </div>
 
           <div className="relative flex-shrink-0" ref={menuRef}>
-            <button
+          <button
               onClick={(e) => {
                 e.stopPropagation()
                 setMenuOpen((v) => !v)
               }}
               className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="논문 설정 메뉴 열기"
-            >
+            aria-label="논문 설정 메뉴 열기"
+          >
               <CogIcon className="w-4 h-4 text-gray-500" />
-            </button>
+          </button>
 
-            {menuOpen && (
+          {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
-                <button
+              <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    onEdit()
-                    setMenuOpen(false)
-                  }}
+                  onEdit()
+                  setMenuOpen(false)
+                }}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors first:rounded-t-lg"
-                >
-                  수정하기
-                </button>
-                <button
+              >
+                수정하기
+              </button>
+              <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    onDelete()
-                    setMenuOpen(false)
-                  }}
+                  onDelete()
+                  setMenuOpen(false)
+                }}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors last:rounded-b-lg"
-                >
-                  삭제하기
-                </button>
-              </div>
-            )}
+              >
+                삭제하기
+              </button>
+            </div>
+          )}
           </div>
         </div>
       </div>
