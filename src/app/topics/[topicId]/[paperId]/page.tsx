@@ -21,7 +21,7 @@ const steps: { key: LearningStep; label: string }[] = [
 const CustomStepper = styled(Stepper)(() => ({
   '& .MuiStepConnector-root': {
     top: '25px', // 원의 중앙에 맞춤 (원 크기 50px의 절반)
-    zIndex: 1,
+    zIndex: 1, // 원보다 아래에 위치
   },
   '& .MuiStepConnector-line': {
     borderColor: '#e5e7eb',
@@ -34,6 +34,38 @@ const CustomStepper = styled(Stepper)(() => ({
   '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
     borderColor: '#3b82f6',
     borderTopWidth: 3,
+  },
+}))
+
+interface CustomStepIconProps {
+  completed?: boolean
+  active?: boolean
+}
+
+const CustomStepIcon = styled('div')<CustomStepIconProps>(({ completed, active }) => ({
+  width: 50,
+  height: 50,
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '1.25rem',
+  fontWeight: 'bold',
+  color: completed || active ? '#ffffff' : '#6b7280',
+  background: completed
+    ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%)' // Blue-purple gradient for completed
+    : active
+      ? 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #8b5cf6 100%)' // Purple-blue gradient for active
+      : '#ffffff',
+  border: completed || active ? '3px solid #e5e7eb' : '3px solid #e5e7eb',
+  boxShadow: completed || active ? '0 10px 25px rgba(139, 92, 246, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s ease',
+  cursor: 'pointer',
+  position: 'relative',
+  zIndex: 10, // 원을 선보다 훨씬 위에 위치시킴
+  '&:hover': {
+    transform: 'scale(1.1)',
+    boxShadow: '0 15px 35px rgba(139, 92, 246, 0.4)',
   },
 }))
 
@@ -87,6 +119,19 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                             },
                           },
                         }}
+                        StepIconComponent={(props) => (
+                          <CustomStepIcon
+                            completed={isCompleted}
+                            active={isCurrent}
+                            onClick={() => handleStepClick(index)}
+                          >
+                            {isCompleted ? (
+                              <CheckIcon style={{ width: '1.5rem', height: '1.5rem' }} />
+                            ) : (
+                              index + 1
+                            )}
+                          </CustomStepIcon>
+                        )}
                       >
                         {step.label}
                       </StepLabel>
