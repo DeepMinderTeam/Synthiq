@@ -11,9 +11,10 @@ import ReactMarkdown from 'react-markdown'
 
 interface PaperContentProps {
   paperId: string
+  isCollapsed?: boolean
 }
 
-export default function PaperContent({ paperId }: PaperContentProps) {
+export default function PaperContent({ paperId, isCollapsed = false }: PaperContentProps) {
   const [contents, setContents] = useState<PaperContentType[]>([])
 
   const [activeTab, setActiveTab] = useState<'original' | 'translation'>('original')
@@ -93,8 +94,33 @@ export default function PaperContent({ paperId }: PaperContentProps) {
     }
   }
 
-  return (
+  // 접힌 상태일 때의 UI
+  if (isCollapsed) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg shadow-sm w-full h-full flex flex-col border border-blue-100">
+        <div className="p-3 border-b border-blue-200">
+          <div className="flex flex-col items-center space-y-2">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-sm">📄</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+          <div className="w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+          <div className="text-xs text-gray-500 text-center font-medium">
+            접힘 상태
+          </div>
+          <div className="text-[10px] text-gray-400 text-center">
+            펼치려면<br />클릭하세요
+          </div>
+        </div>
+      </div>
+    )
+  }
 
+  return (
     <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
       <div className="p-4 sm:p-6 border-b border-gray-100">
         <div className="flex justify-between items-center">

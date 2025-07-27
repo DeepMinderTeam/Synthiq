@@ -7,13 +7,16 @@ import SummaryStep from './SummaryStep'
 import QuizStep from './QuizStep'
 import StatsStep from './StatsStep'
 import QuizGenerationModal from './QuizGenerationModal'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface StepContentProps {
   currentStep: LearningStep
   paperId: string
+  isPaperContentCollapsed?: boolean
+  onTogglePaperContent?: () => void
 }
 
-export default function StepContent({ currentStep, paperId }: StepContentProps) {
+export default function StepContent({ currentStep, paperId, isPaperContentCollapsed, onTogglePaperContent }: StepContentProps) {
   const [activeTab, setActiveTab] = useState<'ai' | 'self'>('ai')
   const [generatingQuiz, setGeneratingQuiz] = useState(false)
   const [showQuizModal, setShowQuizModal] = useState(false)
@@ -108,11 +111,24 @@ export default function StepContent({ currentStep, paperId }: StepContentProps) 
   }
 
   const renderHeader = () => {
+    const toggleButton = onTogglePaperContent && (
+      <button
+        onClick={onTogglePaperContent}
+        className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
+        title={isPaperContentCollapsed ? "논문 내용 펼치기" : "논문 내용 접기"}
+      >
+        {isPaperContentCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+      </button>
+    )
+
     switch (currentStep) {
       case 'summary':
         return (
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+            <div className="flex items-center space-x-3">
+              {toggleButton}
+              <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+            </div>
             <div className="flex items-center space-x-3">
               {activeTab === 'ai' && (
                 <button
@@ -151,7 +167,10 @@ export default function StepContent({ currentStep, paperId }: StepContentProps) 
       case 'quiz':
         return (
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+            <div className="flex items-center space-x-3">
+              {toggleButton}
+              <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+            </div>
             <button
               onClick={() => setShowQuizModal(true)}
               disabled={generatingQuiz}
@@ -161,8 +180,22 @@ export default function StepContent({ currentStep, paperId }: StepContentProps) 
             </button>
           </div>
         )
+      case 'stats':
+        return (
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              {toggleButton}
+              <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+            </div>
+          </div>
+        )
       default:
-        return <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+        return (
+          <div className="flex items-center space-x-3">
+            {toggleButton}
+            <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+          </div>
+        )
     }
   }
 
