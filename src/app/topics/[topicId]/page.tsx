@@ -26,11 +26,13 @@ export default function TopicPage() {
 
   // Sidebar에 표시할 사용자명
   const [userName, setUserName] = useState<string>('')
+  const [userEmail, setUserEmail] = useState<string>('')
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         const meta = (user as any).user_metadata as Record<string, any>
         setUserName(meta.name ?? user.email ?? '')
+        setUserEmail(user.email ?? '')
       }
     })
   }, [])
@@ -160,10 +162,10 @@ export default function TopicPage() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        <Sidebar userName={userName} />
+      <div className="flex h-screen">
+        <Sidebar userName={userName} userEmail={userEmail} />
 
-        <main className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-gray-50 overflow-y-auto">
           <TopBar />
           <div className="p-6">
             <Header

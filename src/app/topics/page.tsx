@@ -23,6 +23,7 @@ export default function TopicsPage() {
   const router = useRouter()
 
   const [userName, setUserName] = useState<string>('')
+  const [userEmail, setUserEmail] = useState<string>('')
   const [topics, setTopics] = useState<Topic[]>([])
   const [favorites, setFavorites] = useState<number[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -41,6 +42,7 @@ export default function TopicsPage() {
       if (user) {
         const meta = (user as any).user_metadata as Record<string, any>
         setUserName(meta.name ?? user.email ?? '')
+        setUserEmail(user.email ?? '')
       }
     }
     loadUser()
@@ -148,9 +150,9 @@ export default function TopicsPage() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        <Sidebar userName={userName} />
-        <main className="flex-1 bg-gray-50">
+      <div className="flex h-screen">
+        <Sidebar userName={userName} userEmail={userEmail} />
+        <main className="flex-1 bg-gray-50 overflow-y-auto">
           <TopBar />
           <div className="p-6">
             <Header

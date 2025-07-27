@@ -40,10 +40,10 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-gray-50">
-        <Sidebar userName={user?.name || '사용자'} />
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar userName={user?.name || '사용자'} userEmail={user?.email || ''} />
       
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <header className="bg-white border-b px-4 sm:px-8 py-4 shadow-sm">
             <div 
               className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
