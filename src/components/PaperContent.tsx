@@ -6,8 +6,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperContent as PaperContentType } from '@/models/paper_contents'
-import ReadingStep from './steps/ReadingStep'
+import { Paper } from '@/models/paper'
+import PaperInfo from './PaperInfo'
 import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
+
+// PdfViewer를 동적으로 import하여 SSR 문제 해결
+const PdfViewer = dynamic(() => import('./steps/pdf/PdfViewer'), { ssr: false })
 
 interface PaperContentProps {
   paperId: string
@@ -16,6 +21,7 @@ interface PaperContentProps {
 
 export default function PaperContent({ paperId, isCollapsed = false }: PaperContentProps) {
   const [contents, setContents] = useState<PaperContentType[]>([])
+  const [paper, setPaper] = useState<Paper | null>(null)
 
   const [activeTab, setActiveTab] = useState<'original' | 'translation'>('original')
   const [translating, setTranslating] = useState(false)
@@ -24,6 +30,7 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
 
   useEffect(() => {
     fetchContents()
+    fetchPaper()
   }, [paperId])
 
   const fetchContents = async () => {
@@ -41,6 +48,24 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
       }
     } catch (err) {
       console.error('논문 내용 로드 오류:', err)
+    }
+  }
+
+  const fetchPaper = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('paper')
+        .select('*')
+        .eq('paper_id', paperId)
+        .single()
+
+      if (error) {
+        console.error('논문 정보 로드 오류:', error)
+      } else {
+        setPaper(data)
+      }
+    } catch (err) {
+      console.error('논문 정보 로드 오류:', err)
     }
   }
 
@@ -216,7 +241,20 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
             )}
           </div>
         ) : (
-          <ReadingStep paperId={paperId} />
+          <div className="h-full flex flex-col space-y-4">
+            {paper && <PaperInfo paper={paper} showAbstract={true} />}
+            {paper?.paper_url && (
+              <div className="flex-1 min-h-0">
+                <h3 className="font-semibold text-gray-700 mb-3">논문 PDF</h3>
+                <div className="flex-1">
+                  <PdfViewer 
+                    filePath={paper.paper_url} 
+                    title={paper.paper_title}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
