@@ -17,10 +17,12 @@ import TopicCard from '@/components/ui/TopicCard'
 import EditTopicModal from '@/components/modals/EditTopicModal'
 import AddTopicModal from '@/components/modals/AddTopicModal'
 import { Calendar, Star } from 'lucide-react'
+import { useRecentViews } from '@/hooks/useRecentViews'
 
 export default function TopicsPage() {
   useAuthRedirect()
   const router = useRouter()
+  const { updateRecentView } = useRecentViews()
 
   const [userName, setUserName] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
@@ -182,6 +184,10 @@ export default function TopicsPage() {
                   onDelete={() => handleDeleteTopic(topic.topic_id)}
                   isFavorite={favorites.includes(topic.topic_id)}
                   onToggleFavorite={() => toggleFavorite(topic.topic_id)}
+                  onCardClick={() => {
+                    updateRecentView('topic', topic.topic_id)
+                    router.push(`/topics/${topic.topic_id}`)
+                  }}
                 />
               ))}
             </div>
@@ -207,7 +213,10 @@ export default function TopicsPage() {
                       <tr
                         key={topic.topic_id}
                         className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
-                        onClick={() => router.push(`/topics/${topic.topic_id}`)}
+                        onClick={() => {
+                          updateRecentView('topic', topic.topic_id)
+                          router.push(`/topics/${topic.topic_id}`)
+                        }}
                       >
                         <td className="px-6 py-5 w-2/3">
                           <div className="flex items-center space-x-4">

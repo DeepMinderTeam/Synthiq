@@ -14,6 +14,7 @@ export interface TopicCardProps {
   onDelete: () => void
   isFavorite: boolean
   onToggleFavorite: () => void
+  onCardClick?: () => void
 }
 
 export default function TopicCard({
@@ -26,6 +27,7 @@ export default function TopicCard({
   onDelete,
   isFavorite,
   onToggleFavorite,
+  onCardClick,
 }: TopicCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [fav, setFav] = useState(isFavorite)
@@ -56,7 +58,11 @@ export default function TopicCard({
 
   // 카드 클릭 핸들러
   const handleCardClick = () => {
-    router.push(`/topics/${topicId}`)
+    if (onCardClick) {
+      onCardClick()
+    } else {
+      router.push(`/topics/${topicId}`)
+    }
   }
 
   // 버튼 클릭 시 이벤트 전파 방지

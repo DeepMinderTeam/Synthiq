@@ -12,6 +12,7 @@ interface PaperCardProps {
   onDelete: () => void
   isFavorite?: boolean
   onToggleFavorite?: () => void
+  onCardClick?: () => void
 }
 
 export default function PaperCard({
@@ -23,6 +24,7 @@ export default function PaperCard({
   onDelete,
   isFavorite = false,
   onToggleFavorite,
+  onCardClick,
 }: PaperCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -39,7 +41,10 @@ export default function PaperCard({
   }, [menuOpen])
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col">
+    <div 
+      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col cursor-pointer"
+      onClick={onCardClick}
+    >
       {/* 상단: 제목과 즐겨찾기 */}
       <div className="p-4 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-start justify-between">

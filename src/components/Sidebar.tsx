@@ -32,10 +32,13 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
   const { recent, favorites, handleTopicClick, toggleFavorite } = useSidebar()
   const [favoriteTopics, setFavoriteTopics] = useState<Topic[]>([])
   const [favoritePapers, setFavoritePapers] = useState<Paper[]>([])
+  const [recentTopics, setRecentTopics] = useState<Topic[]>([])
+  const [recentPapers, setRecentPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchFavorites()
+    fetchRecentViews()
   }, [])
 
   const fetchFavorites = async () => {
@@ -80,6 +83,24 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
     }
 
     setLoading(false)
+  }
+
+  const fetchRecentViews = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return
+
+    try {
+      const response = await fetch(`/api/get-recent-views?userId=${user.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setRecentTopics(data.topicViews.map((view: any) => view.topics))
+          setRecentPapers(data.paperViews.map((view: any) => view.paper))
+        }
+      }
+    } catch (error) {
+      console.error('최근 본 목록 조회 오류:', error)
+    }
   }
 
   const toggleTopicFavorite = async (topicId: number) => {
@@ -142,26 +163,58 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
       </div>
 
       {/* 고정된 컨텐츠 영역 */}
-      <div className="flex-1 px-6">
-        {/* 최근 본 목록 */}
+      <div className="flex-1 px-6 overflow-y-auto">
+        {/* 최근 본 토픽 */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-3">
             <Calendar className="w-4 h-4 text-blue-500" />
-            <h2 className="text-sm font-semibold text-gray-700">최근 본 목록</h2>
+            <h2 className="text-sm font-semibold text-gray-700">최근 본 토픽</h2>
           </div>
-          {recent.length ? (
-            <ul className="space-y-2">
-              {recent.slice(0, 5).map(t => (
-                <li
-                  key={t.topic_id}
-                  onClick={() => { handleTopicClick(t); router.push(`/topics/${t.topic_id}`) }}
-                  className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2"
-                >
-                  <BookOpen className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                  <span className="truncate flex-1 min-w-0">{t.topic_name}</span>
-                </li>
-              ))}
-            </ul>
+          {loading ? (
+            <p className="text-sm text-gray-500 px-2">로딩 중...</p>
+          ) : recentTopics.length ? (
+            <div className="max-h-32 overflow-y-auto">
+              <ul className="space-y-2">
+                {recentTopics.slice(0, 3).map(topic => (
+                  <li
+                    key={topic.topic_id}
+                    onClick={() => router.push(`/topics/${topic.topic_id}`)}
+                    className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <BookOpen className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    <span className="truncate flex-1 min-w-0">{topic.topic_name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 px-2">없음</p>
+          )}
+        </div>
+
+        {/* 최근 본 논문 */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-3">
+            <Calendar className="w-4 h-4 text-purple-500" />
+            <h2 className="text-sm font-semibold text-gray-700">최근 본 논문</h2>
+          </div>
+          {loading ? (
+            <p className="text-sm text-gray-500 px-2">로딩 중...</p>
+          ) : recentPapers.length ? (
+            <div className="max-h-32 overflow-y-auto">
+              <ul className="space-y-2">
+                {recentPapers.slice(0, 3).map(paper => (
+                  <li
+                    key={paper.paper_id}
+                    onClick={() => router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)}
+                    className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <FileText className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    <span className="truncate flex-1 min-w-0">{paper.paper_title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <p className="text-sm text-gray-500 px-2">없음</p>
           )}
@@ -176,30 +229,32 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           {loading ? (
             <p className="text-sm text-gray-500 px-2">로딩 중...</p>
           ) : favoriteTopics.length ? (
-            <ul className="space-y-2">
-              {favoriteTopics.slice(0, 5).map(topic => (
-                <li
-                  key={topic.topic_id}
-                  className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleTopicFavorite(topic.topic_id)
-                    }}
-                    className="flex-shrink-0 hover:scale-110 transition-transform"
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="space-y-2">
+                {favoriteTopics.slice(0, 5).map(topic => (
+                  <li
+                    key={topic.topic_id}
+                    className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
                   >
-                    <StarSolid className="w-3 h-3 text-yellow-500" />
-                  </button>
-                  <span 
-                    className="truncate flex-1 min-w-0 cursor-pointer"
-                    onClick={() => router.push(`/topics/${topic.topic_id}`)}
-                  >
-                    {topic.topic_name}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleTopicFavorite(topic.topic_id)
+                      }}
+                      className="flex-shrink-0 hover:scale-110 transition-transform"
+                    >
+                      <StarSolid className="w-3 h-3 text-yellow-500" />
+                    </button>
+                    <span 
+                      className="truncate flex-1 min-w-0 cursor-pointer"
+                      onClick={() => router.push(`/topics/${topic.topic_id}`)}
+                    >
+                      {topic.topic_name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <p className="text-sm text-gray-500 px-2">없음</p>
           )}
@@ -214,30 +269,32 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           {loading ? (
             <p className="text-sm text-gray-500 px-2">로딩 중...</p>
           ) : favoritePapers.length ? (
-            <ul className="space-y-2">
-              {favoritePapers.slice(0, 5).map(paper => (
-                <li
-                  key={paper.paper_id}
-                  className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      togglePaperFavorite(paper.paper_id)
-                    }}
-                    className="flex-shrink-0 hover:scale-110 transition-transform"
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="space-y-2">
+                {favoritePapers.slice(0, 5).map(paper => (
+                  <li
+                    key={paper.paper_id}
+                    className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
                   >
-                    <StarSolid className="w-3 h-3 text-purple-500" />
-                  </button>
-                  <span 
-                    className="truncate flex-1 min-w-0 cursor-pointer"
-                    onClick={() => router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)}
-                  >
-                    {paper.paper_title}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        togglePaperFavorite(paper.paper_id)
+                      }}
+                      className="flex-shrink-0 hover:scale-110 transition-transform"
+                    >
+                      <StarSolid className="w-3 h-3 text-purple-500" />
+                    </button>
+                    <span 
+                      className="truncate flex-1 min-w-0 cursor-pointer"
+                      onClick={() => router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)}
+                    >
+                      {paper.paper_title}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <p className="text-sm text-gray-500 px-2">없음</p>
           )}

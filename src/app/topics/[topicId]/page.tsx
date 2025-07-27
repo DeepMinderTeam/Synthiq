@@ -16,12 +16,14 @@ import { PdfUploadModal } from '@/components'
 import { ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { FileText, Calendar, Star } from 'lucide-react'
 import { SidebarProvider } from '@/context/SidebarContext'
+import { useRecentViews } from '@/hooks/useRecentViews'
 
 
 export default function TopicPage() {
   const params = useParams()
   const router = useRouter()
   const { user, loading } = useAuth()
+  const { updateRecentView } = useRecentViews()
   const topicId = params.topicId as string
 
   // Sidebar에 표시할 사용자명
@@ -219,6 +221,7 @@ export default function TopicPage() {
                     onClick={e => {
                       const tgt = e.target as HTMLElement
                       if (tgt.closest('button')) return
+                      updateRecentView('paper', paper.paper_id)
                       router.push(`/topics/${topicId}/${paper.paper_id}`)
                     }}
                   >
@@ -267,6 +270,7 @@ export default function TopicPage() {
                           onClick={e => {
                             const tgt = e.target as HTMLElement
                             if (tgt.closest('button') || tgt.closest('a')) return
+                            updateRecentView('paper', paper.paper_id)
                             router.push(`/topics/${topicId}/${paper.paper_id}`)
                           }}
                         >
