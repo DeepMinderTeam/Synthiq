@@ -157,7 +157,7 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
                 disabled={translating}
                 className="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
               >
-                {translating ? '번역 중...' : '✨ AI 번역'}
+                {translating ? '✨ 번역 중...' : '✨ AI 번역'}
               </button>
             )}
             <div className="flex border border-gray-200 rounded-lg overflow-hidden">

@@ -136,7 +136,7 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
                   disabled={generatingSummary}
                   className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
                 >
-                  {generatingSummary ? '생성 중...' : '✨ AI 정리노트 생성'}
+                  {generatingSummary ? '✨ 생성 중...' : '✨ AI 정리노트 생성'}
                 </button>
               )}
               <div className="flex border border-gray-200 rounded-lg overflow-hidden">
@@ -176,7 +176,7 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
               disabled={generatingQuiz}
               className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
             >
-              {generatingQuiz ? '생성 중...' : '✨ AI 퀴즈 생성'}
+              {generatingQuiz ? '✨ 생성 중...' : '✨ AI 퀴즈 생성'}
             </button>
           </div>
         )

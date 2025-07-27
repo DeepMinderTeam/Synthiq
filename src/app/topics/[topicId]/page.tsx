@@ -171,8 +171,36 @@ export default function TopicPage() {
   }
 
   // 검색 필터 및 정렬
+  console.log('검색어:', searchQuery, '논문 수:', papers.length)
   const filteredPapers = papers
-    .filter(p => p.paper_title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(p => {
+      if (!searchQuery.trim()) return true
+      
+      const searchTerm = searchQuery.trim()
+      const title = p.paper_title
+      const abstract = p.paper_abstract || ''
+      
+      // 유니코드 정규화로 한국어 검색 문제 해결
+      const normalizedSearch = searchTerm.normalize('NFC')
+      const normalizedTitle = title.normalize('NFC')
+      const normalizedAbstract = abstract.normalize('NFC')
+      
+      // 더 자세한 디버깅
+      console.log('=== 검색 디버깅 ===')
+      console.log('원본 검색어:', searchQuery)
+      console.log('정리된 검색어:', searchTerm)
+      console.log('정규화된 검색어:', normalizedSearch)
+      console.log('논문 제목:', title)
+      console.log('정규화된 제목:', normalizedTitle)
+      console.log('논문 설명:', abstract)
+      console.log('정규화된 설명:', normalizedAbstract)
+      console.log('제목 포함 여부:', normalizedTitle.toLowerCase().includes(normalizedSearch.toLowerCase()))
+      console.log('설명 포함 여부:', normalizedAbstract.toLowerCase().includes(normalizedSearch.toLowerCase()))
+      console.log('최종 결과:', normalizedTitle.toLowerCase().includes(normalizedSearch.toLowerCase()) || normalizedAbstract.toLowerCase().includes(normalizedSearch.toLowerCase()))
+      console.log('================')
+      
+      return normalizedTitle.toLowerCase().includes(normalizedSearch.toLowerCase()) || normalizedAbstract.toLowerCase().includes(normalizedSearch.toLowerCase())
+    })
     .sort((a, b) => {
       if (sortMode === 'name') return a.paper_title.localeCompare(b.paper_title)
       if (sortMode === 'created') return new Date(b.paper_created_at).getTime() - new Date(a.paper_created_at).getTime()
@@ -356,7 +384,7 @@ export default function TopicPage() {
             )
           ) : (
             <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
-              아직 업로드된 논문이 없습니다.
+              {searchQuery ? `"${searchQuery}"에 대한 검색 결과가 없습니다.` : '아직 업로드된 논문이 없습니다.'}
             </div>
           )}
         </div>
