@@ -14,6 +14,7 @@ interface StepContentProps {
 
 export default function StepContent({ currentStep, paperId }: StepContentProps) {
   const [activeTab, setActiveTab] = useState<'ai' | 'self'>('ai')
+  const [generatingQuiz, setGeneratingQuiz] = useState(false)
 
   const getStepTitle = () => {
     switch (currentStep) {
@@ -30,10 +31,50 @@ export default function StepContent({ currentStep, paperId }: StepContentProps) 
     }
   }
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
-      <div className="p-4 sm:p-6 border-b border-gray-100">
-        {currentStep === 'summary' ? (
+  const handleGenerateQuiz = async () => {
+    try {
+      setGeneratingQuiz(true)
+      console.log('퀴즈 생성 요청 시작:', { paperId })
+      
+      const response = await fetch('/api/generate-quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          paperId, 
+          options: {
+            quizCount: 5,
+            includeMultipleChoice: true,
+            includeShortAnswer: true,
+            includeEssay: false
+          }
+        }),
+      })
+
+      const result = await response.json()
+      console.log('퀴즈 생성 응답:', { status: response.status, result })
+
+      if (!response.ok) {
+        throw new Error(result.error || '퀴즈 생성에 실패했습니다.')
+      }
+
+      // 성공 메시지 표시
+      alert(`퀴즈 생성 완료! ${result.quizCount}개의 퀴즈가 생성되었습니다.`)
+      
+    } catch (err) {
+      console.error('퀴즈 생성 오류:', err)
+      const errorMessage = err instanceof Error ? err.message : '퀴즈 생성 중 오류가 발생했습니다.'
+      alert(`퀴즈 생성 실패: ${errorMessage}`)
+    } finally {
+      setGeneratingQuiz(false)
+    }
+  }
+
+  const renderHeader = () => {
+    switch (currentStep) {
+      case 'summary':
+        return (
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
             <div className="flex border border-gray-200 rounded-lg overflow-hidden">
@@ -59,9 +100,29 @@ export default function StepContent({ currentStep, paperId }: StepContentProps) 
               </button>
             </div>
           </div>
-        ) : (
-          <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
-        )}
+        )
+      case 'quiz':
+        return (
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+            <button
+              onClick={handleGenerateQuiz}
+              disabled={generatingQuiz}
+              className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
+            >
+              {generatingQuiz ? '생성 중...' : '✨ AI 퀴즈 생성'}
+            </button>
+          </div>
+        )
+      default:
+        return <h3 className="text-lg font-semibold text-gray-800">{getStepTitle()}</h3>
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
+      <div className="p-4 sm:p-6 border-b border-gray-100">
+        {renderHeader()}
       </div>
       <div className="flex-1 p-4 sm:p-6 overflow-hidden">
         {currentStep === 'reading' && <ReadingStep paperId={paperId} />}
