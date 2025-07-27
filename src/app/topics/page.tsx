@@ -185,6 +185,7 @@ export default function TopicsPage() {
               {filtered.map(topic => (
                 <TopicCard
                   key={topic.topic_id}
+                  topicId={topic.topic_id.toString()}
                   title={topic.topic_name}
                   description={topic.topic_description || ''}
                   date={topic.topic_created_at.slice(0, 10)}

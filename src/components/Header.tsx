@@ -3,7 +3,7 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Squares2X2Icon, Bars3Icon } from '@heroicons/react/24/outline'
+import { Squares2X2Icon, Bars3Icon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
 import LogoutButton from '@/components/ui/LogoutButton'
 
 interface HeaderProps {
@@ -12,7 +12,6 @@ interface HeaderProps {
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
   onOpenModal: () => void
-
 }
 
 export default function Header({
@@ -24,38 +23,65 @@ export default function Header({
 }: HeaderProps) {
   const router = useRouter()
 
-
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-      {/* 왼쪽: 검색창 */}
-      <div className="flex-1">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="검색어를 입력하세요..."
-          className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={onOpenModal}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          토픽 추가하기
-        </button>
-        <button
-          onClick={() => setViewMode('grid')}
-          className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-        >
-          <Squares2X2Icon className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => setViewMode('list')}
-          className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-        >
-          <Bars3Icon className="w-5 h-5" />
-        </button>
+    <header className="mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        {/* 검색 영역 */}
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="검색어를 입력하세요..."
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
+          </div>
+        </div>
 
-        <LogoutButton />
+        {/* 액션 버튼들 */}
+        <div className="flex items-center gap-3">
+          {/* 토픽 추가 버튼 */}
+          <button
+            onClick={onOpenModal}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <PlusIcon className="w-4 h-4" />
+            <span className="text-sm font-medium">토픽 추가</span>
+          </button>
+
+          {/* 뷰 모드 토글 */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-all duration-200 ${
+                viewMode === 'grid'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              title="그리드 보기"
+            >
+              <Squares2X2Icon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-all duration-200 ${
+                viewMode === 'list'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              title="리스트 보기"
+            >
+              <Bars3Icon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* 로그아웃 버튼 */}
+          <div className="border-l border-gray-200 pl-3">
+            <LogoutButton />
+          </div>
+        </div>
       </div>
     </header>
   )
