@@ -762,7 +762,7 @@ export default function QuizStep({ paperId }: QuizStepProps) {
         <div className="text-gray-500 text-center py-8">
           이 논문에는 아직 퀴즈가 생성되지 않았습니다.
           <br />
-          <span className="text-sm">"🤖 AI 퀴즈 생성" 버튼을 눌러보세요!</span>
+          <span className="text-sm">&ldquo;🤖 AI 퀴즈 생성&rdquo; 버튼을 눌러보세요!</span>
         </div>
       )}
 

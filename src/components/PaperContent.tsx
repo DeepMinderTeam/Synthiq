@@ -3,7 +3,7 @@
 'use client'
 
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperContent as PaperContentType } from '@/models/paper_contents'
 import { Paper } from '@/models/paper'
@@ -28,12 +28,7 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
   const [message, setMessage] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
 
-  useEffect(() => {
-    fetchContents()
-    fetchPaper()
-  }, [paperId])
-
-  const fetchContents = async () => {
+  const fetchContents = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('paper_contents')
@@ -49,9 +44,9 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
     } catch (err) {
       console.error('논문 내용 로드 오류:', err)
     }
-  }
+  }, [paperId])
 
-  const fetchPaper = async () => {
+  const fetchPaper = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('paper')
@@ -67,7 +62,12 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
     } catch (err) {
       console.error('논문 정보 로드 오류:', err)
     }
-  }
+  }, [paperId])
+
+  useEffect(() => {
+    fetchContents()
+    fetchPaper()
+  }, [fetchContents, fetchPaper])
 
   const handleTranslate = async () => {
     try {

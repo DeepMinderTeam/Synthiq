@@ -1,7 +1,7 @@
 // AI 퀴즈 생성 모달 컴포넌트
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
 interface QuizGenerationModalProps {
@@ -52,14 +52,7 @@ export default function QuizGenerationModal({
   const [paperContents, setPaperContents] = useState<PaperContent[]>([])
   const [loadingContents, setLoadingContents] = useState(false)
 
-  // 논문 내용 로드
-  useEffect(() => {
-    if (isOpen && paperId) {
-      loadPaperContents()
-    }
-  }, [isOpen, paperId])
-
-  const loadPaperContents = async () => {
+  const loadPaperContents = useCallback(async () => {
     try {
       setLoadingContents(true)
       const { data, error } = await supabase
@@ -78,7 +71,14 @@ export default function QuizGenerationModal({
     } finally {
       setLoadingContents(false)
     }
-  }
+  }, [paperId])
+
+  // 논문 내용 로드
+  useEffect(() => {
+    if (isOpen && paperId) {
+      loadPaperContents()
+    }
+  }, [isOpen, paperId, loadPaperContents])
 
   const handleGenerate = async () => {
     setGenerating(true)
