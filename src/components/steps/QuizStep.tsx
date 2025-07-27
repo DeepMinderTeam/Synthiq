@@ -561,7 +561,6 @@ export default function QuizStep({ paperId }: QuizStepProps) {
   if (error) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">논문 퀴즈</h2>
         <div className="text-red-500">오류: {error}</div>
       </div>
     )
@@ -569,53 +568,90 @@ export default function QuizStep({ paperId }: QuizStepProps) {
 
   return (
     <div className="h-full overflow-y-auto space-y-4">
-      {/* 헤더 */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">논문 퀴즈</h2>
-        <button
-          onClick={createNewTest}
-          disabled={generatingQuiz}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {generatingQuiz ? '생성 중...' : '🤖 AI 퀴즈 생성'}
-        </button>
-      </div>
 
       {/* 퀴즈 회차 목록 */}
       {testAttempts.length > 0 && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-semibold mb-3 text-gray-700">퀴즈 회차</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {testAttempts.map((attempt) => (
-              <button
-                key={attempt.attempt_id}
-                onClick={() => viewAttemptHistory(attempt)}
-                className={`p-3 rounded-lg border transition-colors text-left ${
-                  attempt.attempt_id < 0 
-                    ? 'bg-blue-50 border-blue-200 hover:border-blue-400 hover:bg-blue-100' 
-                    : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                }`}
-              >
-                <div className="font-medium text-sm text-gray-800">
-                  {attempt.test_title}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {attempt.attempt_id < 0 ? (
-                    <span className="text-blue-600 font-medium">새 퀴즈</span>
-                  ) : (
-                    <>
-                      <div>점수: {attempt.attempt_score}점</div>
-                      {attempt.attempt_duration_sec > 0 && (
-                        <div>소요시간: {formatTime(attempt.attempt_duration_sec)}</div>
-                      )}
-                    </>
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
+          <h3 className="font-semibold mb-4 text-gray-800 flex items-center">
+            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+            퀴즈 회차
+          </h3>
+          <div className="overflow-x-auto">
+            <div className="flex space-x-2 pb-2 min-w-max">
+              {testAttempts.map((attempt, index) => (
+                <button
+                  key={attempt.attempt_id}
+                  onClick={() => viewAttemptHistory(attempt)}
+                  className={`relative flex-shrink-0 w-40 p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-lg ${
+                    currentAttempt?.attempt_id === attempt.attempt_id
+                      ? 'border-blue-400 bg-blue-50 shadow-md'
+                      : attempt.attempt_id < 0 
+                        ? 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50' 
+                        : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                  }`}
+                >
+                  {/* 회차 번호 - 새 퀴즈가 아닐 때만 표시 */}
+                  {attempt.attempt_id >= 0 && (
+                    <div className="absolute top-1 left-1 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      {testAttempts.length - index}
+                    </div>
                   )}
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {new Date(attempt.attempt_created_at).toLocaleDateString()}
-                </div>
-              </button>
-            ))}
+                  
+                  {/* 새 퀴즈 표시 */}
+                  {attempt.attempt_id < 0 && (
+                    <div className="absolute top-1 left-1">
+                      <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium text-xs">
+                        NEW
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <div className="font-semibold text-sm text-gray-800 line-clamp-2 pt-2">
+                      {attempt.test_title}
+                    </div>
+                    
+                    <div className="text-xs text-gray-600 space-y-1">
+                      {attempt.attempt_id < 0 ? (
+                        <div className="flex items-center text-blue-600 font-medium">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                          새 퀴즈
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">점수:</span>
+                            <span className={`font-semibold ${
+                              attempt.attempt_score >= 80 ? 'text-green-600' :
+                              attempt.attempt_score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {attempt.attempt_score}점
+                            </span>
+                          </div>
+                          {attempt.attempt_duration_sec > 0 && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">시간:</span>
+                              <span className="font-mono text-xs text-gray-700">
+                                {formatTime(attempt.attempt_duration_sec)}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="text-xs text-gray-400 pt-1 border-t border-gray-100">
+                      {new Date(attempt.attempt_created_at).toLocaleDateString('ko-KR', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
