@@ -5,4 +5,5 @@ export interface PaperContent {
   content_type?: string; // 콘텐츠 타입(예: 1.서론, 2.기술동향...등)
   content_index: number; // 논문 내 순서
   content_text: string; // 콘텐츠 텍스트
+  content_text_eng?: string; // 번역된 텍스트
 } 

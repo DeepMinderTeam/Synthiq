@@ -7,14 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// 문단을 배치로 나누는 함수
-function chunkArray(array: any[], chunkSize: number) {
-  const chunks = []
-  for (let i = 0; i < array.length; i += chunkSize) {
-    chunks.push(array.slice(i, i + chunkSize))
-  }
-  return chunks
-}
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,62 +61,106 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. 문단을 10개씩 묶어서 순차적으로 요약 생성
-    const chunks = chunkArray(contents, 10)
-    const summaries = []
+    // 3. 전체 논문을 한번에 처리하여 구조화된 정리노트 생성
+    console.log(`전체 ${contents.length}개 페이지를 한번에 처리하여 정리노트 생성`)
+    
+    const allContentText = contents.map((content: any, idx: number) => 
+      `## 페이지 ${idx + 1} (${content.content_type || '내용'})\n${content.content_text}`
+    ).join('\n\n')
 
-    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-      const chunk = chunks[chunkIndex]
-      const startIndex = chunkIndex * 10 + 1
-      const endIndex = Math.min((chunkIndex + 1) * 10, contents.length)
-      
-      console.log(`배치 ${chunkIndex + 1}/${chunks.length} 처리 중 (문단 ${startIndex}-${endIndex})`)
-      
-      const summaryPrompt = `
-다음은 논문의 ${startIndex}번째부터 ${endIndex}번째까지의 문단들입니다. 
-이 문단들을 읽고 정리노트 형태로 요약해주세요.
+    const summaryPrompt = `
+다음은 논문의 전체 내용입니다. 페이지별로 구성되어 있으며, 논문의 전체적인 흐름과 구조를 파악하여 체계적인 정리노트를 작성해주세요.
 
-요약 요구사항:
-1. 핵심 내용을 간결하게 정리
-2. 중요한 개념이나 용어는 명확히 설명
-3. 논문의 흐름을 유지하면서 정리
-4. "정리노트" 형태로 작성
+# 📚 논문 전체 내용
 
-문단들:
-${chunk.map((content: any, idx: number) => `${startIndex + idx}. ${content.content_text}`).join('\n\n')}
+${allContentText}
 
-정리노트를 작성해주세요:
+위 논문의 전체 내용을 바탕으로 다음 형식의 구조화된 정리노트를 작성해주세요:
+
+# 📖 논문 정리노트
+
+## 🎯 논문 개요
+- **제목**: 논문의 제목과 핵심 주제
+- **연구 목적**: 이 논문이 해결하려는 문제나 목표
+- **주요 기여**: 이 연구의 핵심 기여사항
+
+## 📋 논문 구조 분석
+### 1️⃣ 서론 및 배경
+- 연구의 배경과 동기
+- 관련 연구 현황
+- 연구의 필요성
+
+### 2️⃣ 방법론
+- 연구 방법과 접근법
+- 사용된 기술이나 도구
+- 실험 설계
+
+### 3️⃣ 실험 및 결과
+- 실험 과정과 설정
+- 주요 결과와 발견사항
+- 성능 평가
+
+### 4️⃣ 결론 및 향후 연구
+- 연구의 의의와 한계
+- 향후 연구 방향
+- 실제 적용 가능성
+
+## 💡 핵심 개념 정리
+- 논문에서 다루는 주요 개념들
+- 중요한 용어와 정의
+- 핵심 아이디어
+
+## 🔬 기술적 세부사항
+- 구현 방법과 알고리즘
+- 시스템 아키텍처
+- 성능 최적화 기법
+
+## 📊 결과 분석
+- 실험 결과의 의미
+- 성능 지표 해석
+- 비교 분석
+
+## 🚀 실무 적용 가능성
+- 실제 적용 사례
+- 산업계 활용 방안
+- 상용화 가능성
+
+## 📚 참고 자료 및 연관 연구
+- 관련 연구들
+- 추가 학습 자료
+- 확장 연구 주제
+
+각 섹션은 논문의 흐름을 따라 자연스럽게 연결되도록 작성하고, 구체적인 예시와 함께 설명해주세요. 마크다운 형식을 적극 활용하여 가독성을 높여주세요.
 `
 
-      const summaryResponse = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: '당신은 논문을 읽고 정리노트를 작성하는 전문가입니다. 핵심 내용을 간결하고 명확하게 정리해주세요.'
-          },
-          {
-            role: 'user',
-            content: summaryPrompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 800
-      })
+    const summaryResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: '당신은 학술 논문을 체계적으로 분석하고 정리하는 전문가입니다. 논문의 전체적인 흐름을 파악하여 구조화된 정리노트를 작성해주세요. 각 섹션이 논리적으로 연결되도록 하고, 핵심 내용을 명확하게 정리해주세요.'
+        },
+        {
+          role: 'user',
+          content: summaryPrompt
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 2000
+    })
 
-      const summaryResult = summaryResponse.choices[0]?.message?.content
-      if (!summaryResult) {
-        throw new Error(`배치 ${chunkIndex + 1}의 OpenAI 요약 응답을 받지 못했습니다.`)
-      }
-
-      summaries.push({
-        summary_content_id: chunk[0].content_id,
-        summary_text: summaryResult,
-        summary_type: `AI_정리노트_${startIndex}-${endIndex}`
-      })
-
-      console.log(`배치 ${chunkIndex + 1}/${chunks.length} 완료`)
+    const summaryResult = summaryResponse.choices[0]?.message?.content
+    if (!summaryResult) {
+      throw new Error('OpenAI 요약 응답을 받지 못했습니다.')
     }
+
+    const summaries = [{
+      summary_content_id: contents[0].content_id,
+      summary_text: summaryResult,
+      summary_type: 'AI_전체정리노트'
+    }]
+
+    console.log('전체 정리노트 생성 완료')
 
     // 4. 요약을 Supabase에 저장
     if (summaries.length > 0) {
