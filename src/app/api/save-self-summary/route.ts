@@ -23,10 +23,30 @@ export async function POST(request: NextRequest) {
         .limit(1)
 
       if (fetchError || !summaries || summaries.length === 0) {
-        return NextResponse.json(
-          { error: '저장할 요약을 찾을 수 없습니다.' },
-          { status: 404 }
-        )
+        // 요약이 없으면 새로 생성
+        const { data: newSummary, error: createError } = await supabase
+          .from('paper_summaries')
+          .insert({
+            summary_content_id: 1, // 기본값
+            summary_text: '', // 빈 AI 요약
+            summary_text_self: summaryText // 사용자 요약
+          })
+          .select()
+          .single()
+
+        if (createError) {
+          console.error('새 요약 생성 오류:', createError)
+          return NextResponse.json(
+            { error: '새 요약을 생성할 수 없습니다.' },
+            { status: 500 }
+          )
+        }
+
+        return NextResponse.json({ 
+          success: true, 
+          message: '사용자 요약이 저장되었습니다.',
+          summaryId: newSummary.summary_id
+        })
       }
 
       summaryIdToUpdate = summaries[0].summary_id
@@ -48,7 +68,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: '사용자 요약이 저장되었습니다.' 
+      message: '사용자 요약이 저장되었습니다.',
+      summaryId: summaryIdToUpdate
     })
   } catch (error) {
     console.error('사용자 요약 저장 중 오류:', error)
