@@ -27,8 +27,10 @@ interface PaperLearningPageProps {
 
 export default function PaperLearningPage({ params }: PaperLearningPageProps) {
   const { currentStep, setCurrentStep } = usePaperStore()
+
   const { user } = useAuth()
   const router = useRouter()
+
   const { paperId } = params
 
   const getCurrentStepIndex = () => {
@@ -36,6 +38,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
   }
 
   return (
+
     <div className="flex min-h-screen bg-gray-50">
              <Sidebar userName={user?.name || '사용자'} />
       

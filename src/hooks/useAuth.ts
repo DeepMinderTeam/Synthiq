@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { User } from '@/models/user'
+
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+
 
   const fetchUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
@@ -54,16 +57,19 @@ export function useAuth() {
     }
   }
 
+
   useEffect(() => {
     // 현재 세션 가져오기
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+
       if (session?.user) {
         const userProfile = await fetchUserProfile(session.user)
         setUser(userProfile)
       } else {
         setUser(null)
       }
+
       setLoading(false)
     }
 
@@ -72,12 +78,14 @@ export function useAuth() {
     // 인증 상태 변경 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+
         if (session?.user) {
           const userProfile = await fetchUserProfile(session.user)
           setUser(userProfile)
         } else {
           setUser(null)
         }
+
         setLoading(false)
       }
     )

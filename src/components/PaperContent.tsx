@@ -2,6 +2,7 @@
 // ReadingStep 컴포넌트를 재사용하여 논문 정보와 PDF를 표시
 'use client'
 
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperContent as PaperContentType } from '@/models/paper_contents'
@@ -14,6 +15,7 @@ interface PaperContentProps {
 
 export default function PaperContent({ paperId }: PaperContentProps) {
   const [contents, setContents] = useState<PaperContentType[]>([])
+
   const [activeTab, setActiveTab] = useState<'original' | 'translation'>('original')
   const [translating, setTranslating] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -46,6 +48,7 @@ export default function PaperContent({ paperId }: PaperContentProps) {
       setTranslating(true)
       setMessage('번역을 생성하고 있습니다...')
 
+
       const response = await fetch('/api/translate-paper', {
         method: 'POST',
         headers: {
@@ -60,6 +63,7 @@ export default function PaperContent({ paperId }: PaperContentProps) {
         throw new Error(result.error || '번역에 실패했습니다.')
       }
 
+
       setMessage('번역이 완료되었습니다!')
       setTimeout(() => setMessage(null), 3000)
       
@@ -72,6 +76,7 @@ export default function PaperContent({ paperId }: PaperContentProps) {
       setTranslating(false)
     }
   }
+
 
   const handlePageChange = (direction: 'prev' | 'next') => {
     if (direction === 'prev' && currentPage > 0) {
@@ -89,6 +94,7 @@ export default function PaperContent({ paperId }: PaperContentProps) {
   }
 
   return (
+
     <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
       <div className="p-4 sm:p-6 border-b border-gray-100">
         <div className="flex justify-between items-center">
@@ -123,7 +129,7 @@ export default function PaperContent({ paperId }: PaperContentProps) {
           {message}
         </div>
       )}
-      
+
       <div className="flex-1 p-4 sm:p-6 overflow-hidden">
         {activeTab === 'translation' ? (
           <div className="h-full flex flex-col">
