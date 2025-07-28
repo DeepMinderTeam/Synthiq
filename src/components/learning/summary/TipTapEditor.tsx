@@ -21,12 +21,12 @@ interface TipTapEditorProps {
 export default function TipTapEditor({ content, onUpdate, onBlur }: TipTapEditorProps) {
   const timeoutRef = useRef<NodeJS.Timeout>()
   const isInitializedRef = useRef(false)
-  
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: '여기에 나의 정리노트를 작성하세요...',
+        placeholder: '여기에 정리노트를 작성하세요...',
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -51,7 +51,6 @@ export default function TipTapEditor({ content, onUpdate, onBlur }: TipTapEditor
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none',
-        style: 'min-height: 280mm;',
       },
     },
     immediatelyRender: false, // SSR 문제 해결
@@ -88,15 +87,13 @@ export default function TipTapEditor({ content, onUpdate, onBlur }: TipTapEditor
 
   const addLink = () => {
     const url = window.prompt('URL을 입력하세요:')
-    if (url && editor) {
-      editor.chain().focus().setLink({ href: url }).run()
+    if (url) {
+      editor?.chain().focus().setLink({ href: url }).run()
     }
   }
 
   const removeLink = () => {
-    if (editor) {
-      editor.chain().focus().unsetLink().run()
-    }
+    editor?.chain().focus().unsetLink().run()
   }
 
   if (!editor) {
@@ -113,102 +110,102 @@ export default function TipTapEditor({ content, onUpdate, onBlur }: TipTapEditor
       <div className="border-b border-gray-200 pb-2 mb-4">
         <div className="overflow-x-auto">
           <div className="flex gap-1 items-center justify-start min-w-max">
-          <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('bold') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="굵게"
-          >
-            <strong className="text-sm">B</strong>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('italic') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="기울임"
-          >
-            <em className="text-sm">I</em>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('underline') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="밑줄"
-          >
-            <u className="text-sm">U</u>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHighlight().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('highlight') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="하이라이트"
-          >
-            <span className="bg-yellow-200 px-1 text-xs">H</span>
-          </button>
-          <div className="w-px h-6 bg-gray-300 mx-1"></div>
-          <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="제목 1"
-          >
-            <span className="text-xs font-semibold">H1</span>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('heading', { level: 2 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="제목 2"
-          >
-            <span className="text-xs font-semibold">H2</span>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('heading', { level: 3 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="제목 3"
-          >
-            <span className="text-xs font-semibold">H3</span>
-          </button>
-          <div className="w-px h-6 bg-gray-300 mx-1"></div>
-          <button
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('bulletList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="글머리 기호 목록"
-          >
-            <span className="text-sm">•</span>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('orderedList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="번호 매기기 목록"
-          >
-            <span className="text-sm">1.</span>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('taskList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="할 일 목록"
-          >
-            <span className="text-sm">☐</span>
-          </button>
-          <div className="w-px h-6 bg-gray-300 mx-1"></div>
-          <button
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('codeBlock') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="코드 블록"
-          >
-            <span className="text-xs font-mono">{'</>'}</span>
-          </button>
-          <button
-            onClick={addLink}
-            className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('link') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
-            title="링크 추가"
-          >
-            <span className="text-sm">🔗</span>
-          </button>
-          {editor.isActive('link') && (
             <button
-              onClick={removeLink}
-              className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-red-600"
-              title="링크 제거"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('bold') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="굵게"
             >
-              <span className="text-sm">✕</span>
+              <strong className="text-sm">B</strong>
             </button>
-          )}
+            <button
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('italic') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="기울임"
+            >
+              <em className="text-sm">I</em>
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('underline') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="밑줄"
+            >
+              <u className="text-sm">U</u>
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHighlight().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('highlight') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="하이라이트"
+            >
+              <span className="bg-yellow-200 px-1 text-xs">H</span>
+            </button>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="제목 1"
+            >
+              <span className="text-xs font-semibold">H1</span>
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('heading', { level: 2 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="제목 2"
+            >
+              <span className="text-xs font-semibold">H2</span>
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('heading', { level: 3 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="제목 3"
+            >
+              <span className="text-xs font-semibold">H3</span>
+            </button>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('bulletList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="글머리 기호 목록"
+            >
+              <span className="text-sm">•</span>
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('orderedList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="번호 매기기 목록"
+            >
+              <span className="text-sm">1.</span>
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('taskList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="할 일 목록"
+            >
+              <span className="text-sm">☐</span>
+            </button>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('codeBlock') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="코드 블록"
+            >
+              <span className="text-xs font-mono">{'</>'}</span>
+            </button>
+            <button
+              onClick={addLink}
+              className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('link') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+              title="링크 추가"
+            >
+              <span className="text-sm">🔗</span>
+            </button>
+            {editor.isActive('link') && (
+              <button
+                onClick={removeLink}
+                className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-red-600"
+                title="링크 제거"
+              >
+                <span className="text-sm">✕</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

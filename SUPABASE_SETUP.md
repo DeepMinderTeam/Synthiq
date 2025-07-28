@@ -124,3 +124,110 @@ papers/
 - `File too large`: 파일 크기 제한 확인
 - `Invalid file type`: PDF 파일인지 확인
 - `Unauthorized`: 사용자 권한 확인 
+
+# Supabase 설정 가이드
+
+## 데이터베이스 스키마
+
+### 기존 테이블 수정
+
+#### paper_quizzes 테이블에 quiz_category 열 추가
+```sql
+-- paper_quizzes 테이블에 quiz_category 열 추가
+ALTER TABLE paper_quizzes 
+ADD COLUMN quiz_category TEXT;
+
+-- 기존 데이터에 기본값 설정 (선택사항)
+UPDATE paper_quizzes 
+SET quiz_category = '일반 학습' 
+WHERE quiz_category IS NULL;
+
+-- 열에 대한 설명 추가
+COMMENT ON COLUMN paper_quizzes.quiz_category IS '퀴즈 카테고리 (예: 개념 이해, 원리 및 구조, 실험 및 결과 등)';
+```
+
+### 기존 테이블 구조
+
+#### paper_quizzes 테이블
+```sql
+CREATE TABLE paper_quizzes (
+  quiz_id SERIAL PRIMARY KEY,
+  quiz_content_id INTEGER REFERENCES paper_contents(content_id) ON DELETE CASCADE,
+  quiz_type TEXT,
+  quiz_question TEXT NOT NULL,
+  quiz_choices JSONB,
+  quiz_answer TEXT NOT NULL,
+  quiz_explanation TEXT,
+  quiz_category TEXT -- 새로 추가된 열
+);
+```
+
+## RLS (Row Level Security) 설정
+
+### paper_quizzes 테이블
+```sql
+-- RLS 활성화
+ALTER TABLE paper_quizzes ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 사용자는 자신이 생성한 퀴즈만 볼 수 있음
+CREATE POLICY "Users can view quizzes from their papers" ON paper_quizzes
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM paper_contents pc
+      JOIN paper p ON pc.content_paper_id = p.paper_id
+      WHERE pc.content_id = paper_quizzes.quiz_content_id
+      AND p.paper_user_id = auth.uid()
+    )
+  );
+
+-- 정책: 사용자는 자신의 논문에 퀴즈를 생성할 수 있음
+CREATE POLICY "Users can insert quizzes to their papers" ON paper_quizzes
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM paper_contents pc
+      JOIN paper p ON pc.content_paper_id = p.paper_id
+      WHERE pc.content_id = paper_quizzes.quiz_content_id
+      AND p.paper_user_id = auth.uid()
+    )
+  );
+```
+
+## 인덱스 설정
+
+### 성능 최적화를 위한 인덱스
+```sql
+-- quiz_content_id에 대한 인덱스
+CREATE INDEX idx_paper_quizzes_content_id ON paper_quizzes(quiz_content_id);
+
+-- quiz_type에 대한 인덱스
+CREATE INDEX idx_paper_quizzes_type ON paper_quizzes(quiz_type);
+
+-- quiz_category에 대한 인덱스 (새로 추가)
+CREATE INDEX idx_paper_quizzes_category ON paper_quizzes(quiz_category);
+
+-- 복합 인덱스
+CREATE INDEX idx_paper_quizzes_content_type ON paper_quizzes(quiz_content_id, quiz_type);
+```
+
+## 사용 예시
+
+### 퀴즈 생성 시 카테고리 포함
+```typescript
+const newQuiz = {
+  quiz_content_id: contentId,
+  quiz_type: 'multiple_choice',
+  quiz_question: '문제 내용',
+  quiz_choices: ['선택지1', '선택지2', '선택지3', '선택지4'],
+  quiz_answer: '정답',
+  quiz_explanation: '해설',
+  quiz_category: '개념 이해' // 새로 추가된 필드
+};
+```
+
+### 카테고리별 퀴즈 조회
+```typescript
+const { data: quizzes } = await supabase
+  .from('paper_quizzes')
+  .select('*')
+  .eq('quiz_category', '개념 이해');
+``` 

@@ -6,7 +6,7 @@ import ReadingStep from './ReadingStep'
 import SummaryStep from './SummaryStep'
 import QuizStep from './QuizStep'
 import StatsStep from '../stats/StatsStep'
-import QuizGenerationModal from '../quiz/QuizGenerationModal'
+import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerationModal'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAIAnalysis } from '@/context/AIAnalysisContext'
 import React from 'react'
@@ -65,7 +65,7 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
     }
   }, [currentStep])
 
-  const handleGenerateQuiz = useCallback(async (options: any) => {
+  const handleGenerateQuiz = useCallback(async (options: QuizGenerationOptions) => {
     try {
       startQuizGeneration(paperId, paperTitle || '논문', topicId)
       console.log('퀴즈 생성 요청 시작:', { paperId, options })
@@ -78,6 +78,8 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
         body: JSON.stringify({ 
           paperId, 
           options: {
+            purpose: options.purpose,
+            categories: options.categories,
             questionCount: options.questionCount,
             difficulty: options.difficulty,
             questionTypes: options.questionTypes,
