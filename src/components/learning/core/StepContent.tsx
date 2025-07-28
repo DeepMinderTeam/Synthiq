@@ -1,28 +1,56 @@
 // 논문 학습 단계별 내용을 통합 관리하는 컴포넌트
 // 현재 단계에 따라 적절한 컴포넌트(읽기/요약/퀴즈/통계)를 렌더링
 import { type LearningStep } from '@/hooks/paperStore'
-import { useState } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import ReadingStep from './ReadingStep'
 import SummaryStep from './SummaryStep'
 import QuizStep from './QuizStep'
 import StatsStep from '../stats/StatsStep'
 import QuizGenerationModal from '../quiz/QuizGenerationModal'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useAIAnalysis } from '@/context/AIAnalysisContext'
+import React from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 interface StepContentProps {
   currentStep: LearningStep
   paperId: string
+  topicId: string
   isPaperContentCollapsed?: boolean
   onTogglePaperContent?: () => void
 }
 
-export default function StepContent({ currentStep, paperId, isPaperContentCollapsed, onTogglePaperContent }: StepContentProps) {
+const StepContent = React.memo(function StepContent({ currentStep, paperId, topicId, isPaperContentCollapsed, onTogglePaperContent }: StepContentProps) {
   const [activeTab, setActiveTab] = useState<'ai' | 'self'>('ai')
-  const [generatingQuiz, setGeneratingQuiz] = useState(false)
   const [showQuizModal, setShowQuizModal] = useState(false)
-  const [generatingSummary, setGeneratingSummary] = useState(false)
+  const [paperTitle, setPaperTitle] = useState<string>('')
+  const { state, startSummaryGeneration, startQuizGeneration, completeSummaryGeneration, completeQuizGeneration } = useAIAnalysis()
+  const { isGeneratingSummary, isGeneratingQuiz } = state
 
-  const getStepTitle = () => {
+  // 논문 제목 가져오기
+  useEffect(() => {
+    const fetchPaperTitle = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('paper')
+          .select('paper_title')
+          .eq('paper_id', paperId)
+          .single()
+
+        if (!error && data) {
+          setPaperTitle(data.paper_title)
+        }
+      } catch (err) {
+        console.error('논문 제목 로드 오류:', err)
+      }
+    }
+
+    if (paperId) {
+      fetchPaperTitle()
+    }
+  }, [paperId])
+
+  const getStepTitle = useCallback(() => {
     switch (currentStep) {
       case 'reading':
         return '논문 읽기'
@@ -35,11 +63,11 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
       default:
         return ''
     }
-  }
+  }, [currentStep])
 
-  const handleGenerateQuiz = async (options: any) => {
+  const handleGenerateQuiz = useCallback(async (options: any) => {
     try {
-      setGeneratingQuiz(true)
+      startQuizGeneration(paperId, paperTitle || '논문', topicId)
       console.log('퀴즈 생성 요청 시작:', { paperId, options })
       
       const response = await fetch('/api/generate-quiz', {
@@ -66,21 +94,18 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
         throw new Error(result.error || '퀴즈 생성에 실패했습니다.')
       }
 
-      // 성공 메시지 표시
-      alert(`퀴즈 생성 완료! ${result.quizCount}개의 퀴즈가 생성되었습니다.`)
+      completeQuizGeneration()
       
     } catch (err) {
       console.error('퀴즈 생성 오류:', err)
       const errorMessage = err instanceof Error ? err.message : '퀴즈 생성 중 오류가 발생했습니다.'
       alert(`퀴즈 생성 실패: ${errorMessage}`)
-    } finally {
-      setGeneratingQuiz(false)
     }
-  }
+  }, [paperId, paperTitle, startQuizGeneration, completeQuizGeneration])
 
-  const handleGenerateAISummary = async () => {
+  const handleGenerateAISummary = useCallback(async () => {
     try {
-      setGeneratingSummary(true)
+      startSummaryGeneration(paperId, paperTitle || '논문', topicId)
       console.log('AI 요약 생성 요청 시작:', { paperId })
       
       const response = await fetch('/api/classify-and-summarize', {
@@ -98,17 +123,14 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
         throw new Error(result.error || 'AI 요약 생성에 실패했습니다.')
       }
 
-      // 성공 메시지 표시
-      alert('AI 정리노트 생성 완료!')
+      completeSummaryGeneration()
       
     } catch (err) {
       console.error('AI 요약 생성 오류:', err)
       const errorMessage = err instanceof Error ? err.message : 'AI 요약 생성 중 오류가 발생했습니다.'
       alert(`AI 요약 생성 실패: ${errorMessage}`)
-    } finally {
-      setGeneratingSummary(false)
     }
-  }
+  }, [paperId, paperTitle, startSummaryGeneration, completeSummaryGeneration])
 
   const renderHeader = () => {
     const toggleButton = onTogglePaperContent && (
@@ -133,10 +155,10 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
               {activeTab === 'ai' && (
                 <button
                   onClick={handleGenerateAISummary}
-                  disabled={generatingSummary}
+                  disabled={isGeneratingSummary}
                   className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
                 >
-                  {generatingSummary ? '✨ 생성 중...' : '✨ AI 정리노트 생성'}
+                  {isGeneratingSummary ? '✨ 생성 중...' : '✨ AI 정리노트 생성'}
                 </button>
               )}
               <div className="flex border border-gray-200 rounded-lg overflow-hidden">
@@ -173,10 +195,10 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
             </div>
             <button
               onClick={() => setShowQuizModal(true)}
-              disabled={generatingQuiz}
+              disabled={isGeneratingQuiz}
               className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
             >
-              {generatingQuiz ? '✨ 생성 중...' : '✨ AI 퀴즈 생성'}
+              {isGeneratingQuiz ? '✨ 생성 중...' : '✨ AI 퀴즈 생성'}
             </button>
           </div>
         )
@@ -201,7 +223,7 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
 
   // 논문 읽기 단계에서는 전체 화면 사용
   if (currentStep === 'reading') {
-    return <ReadingStep paperId={paperId} />
+    return <ReadingStep paperId={paperId} topicId={topicId} />
   }
 
   // 다른 단계에서는 기존 레이아웃 사용
@@ -225,4 +247,6 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
       />
     </div>
   )
-} 
+})
+
+export default StepContent 

@@ -73,7 +73,7 @@ export default function TopicCard({
 
   return (
     <div 
-      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col hover:cursor-pointer"
+      className="bg-white rounded-3xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col hover:cursor-pointer"
       onClick={handleCardClick}
     >
       {/* 상단: 제목과 즐겨찾기 */}
@@ -117,7 +117,7 @@ export default function TopicCard({
       </div>
 
       {/* 하단: 액션 버튼들 */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0 rounded-b-3xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 min-w-0">
             {fav && (

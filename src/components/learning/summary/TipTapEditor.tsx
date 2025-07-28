@@ -10,14 +10,18 @@ import Highlight from '@tiptap/extension-highlight'
 import CodeBlock from '@tiptap/extension-code-block'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface TipTapEditorProps {
   content: string
   onUpdate: (content: string) => void
+  onBlur?: (content: string) => void
 }
 
-export default function TipTapEditor({ content, onUpdate }: TipTapEditorProps) {
+export default function TipTapEditor({ content, onUpdate, onBlur }: TipTapEditorProps) {
+  const timeoutRef = useRef<NodeJS.Timeout>()
+  const isInitializedRef = useRef(false)
+  
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -40,7 +44,9 @@ export default function TipTapEditor({ content, onUpdate }: TipTapEditorProps) {
     ],
     content: content,
     onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML())
+      // 로컬에만 즉시 저장 (서버 저장은 blur 시에만)
+      const html = editor.getHTML()
+      onUpdate(html)
     },
     editorProps: {
       attributes: {
@@ -51,12 +57,34 @@ export default function TipTapEditor({ content, onUpdate }: TipTapEditorProps) {
     immediatelyRender: false, // SSR 문제 해결
   })
 
-  // content가 외부에서 변경될 때 에디터 내용 업데이트
+  // 초기 로드 시에만 content 설정 (에디터가 생성된 직후 한 번만)
   useEffect(() => {
-    if (editor && editor.getHTML() !== content) {
-      editor.commands.setContent(content)
+    if (editor && !isInitializedRef.current) {
+      // 에디터가 비어있을 때만 초기 content 설정
+      const currentContent = editor.getHTML()
+      if ((currentContent === '<p></p>' || currentContent === '') && content !== '') {
+        editor.commands.setContent(content)
+      }
+      isInitializedRef.current = true
     }
-  }, [content, editor])
+  }, [editor, content])
+
+  // blur 이벤트 핸들러 추가
+  useEffect(() => {
+    if (editor && onBlur) {
+      const handleBlur = () => {
+        // 에디터에서 포커스를 잃을 때 서버에 저장
+        const html = editor.getHTML()
+        onBlur(html)
+      }
+
+      editor.on('blur', handleBlur)
+      
+      return () => {
+        editor.off('blur', handleBlur)
+      }
+    }
+  }, [editor, onBlur])
 
   const addLink = () => {
     const url = window.prompt('URL을 입력하세요:')
@@ -83,7 +111,8 @@ export default function TipTapEditor({ content, onUpdate }: TipTapEditorProps) {
     <>
       {/* 툴바 */}
       <div className="border-b border-gray-200 pb-2 mb-4">
-        <div className="flex flex-wrap gap-1 items-center justify-start">
+        <div className="overflow-x-auto">
+          <div className="flex gap-1 items-center justify-start min-w-max">
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 ${editor.isActive('bold') ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
@@ -180,6 +209,7 @@ export default function TipTapEditor({ content, onUpdate }: TipTapEditorProps) {
               <span className="text-sm">✕</span>
             </button>
           )}
+          </div>
         </div>
       </div>
       

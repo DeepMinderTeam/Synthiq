@@ -83,7 +83,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
   const { user } = useAuth()
   const router = useRouter()
 
-  const { paperId } = params
+  const { paperId, topicId } = params
 
   const getCurrentStepIndex = () => steps.findIndex(s => s.key === currentStep)
   const handleStepClick = (index: number) => setCurrentStep(steps[index].key)
@@ -147,7 +147,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
             <div className="p-4 sm:p-8">
         {currentStep === 'reading' ? (
             <div className="w-full h-full">
-            <ReadingStep paperId={paperId} />
+            <ReadingStep paperId={paperId} topicId={topicId} />
           </div>
         ) : (
                 <div className="flex w-full h-full transition-all duration-500 gap-4">
@@ -158,6 +158,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   >
                     <PaperContent
                       paperId={paperId}
+                      topicId={topicId}
                       isCollapsed={isCollapsed}
                     />
             </div>
@@ -167,12 +168,13 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                     className={`overflow-hidden transition-all duration-500 ease-in-out 
                     ${isCollapsed ? 'basis-[94%]' : 'basis-[50%]'}`}
                   >
-                <StepContent 
-                  currentStep={currentStep}
-                  paperId={paperId}
+                                    <StepContent
+                      currentStep={currentStep}
+                      paperId={paperId}
+                      topicId={topicId}
                       isPaperContentCollapsed={isCollapsed}
                       onTogglePaperContent={() => setIsCollapsed(!isCollapsed)}
-                />
+                    />
               </div>
           </div>
         )}

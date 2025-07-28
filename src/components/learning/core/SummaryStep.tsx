@@ -23,7 +23,6 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [selfSummary, setSelfSummary] = useState('')
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [currentSummaryId, setCurrentSummaryId] = useState<number>(0)
 
@@ -251,37 +250,23 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
     }
   }
 
-  // 자동 저장 함수
+  // 내용 변경 함수 (로컬 저장만)
   const handleSelfSummaryChange = (value: string) => {
     setSelfSummary(value)
     
     // localStorage에 즉시 백업
     const backupKey = `selfSummary_${paperId}`
     localStorage.setItem(backupKey, value)
-    
-    // 기존 타이머 취소
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer)
-    }
-    
-    // 1.5초 후 자동 저장 (더 빠른 응답)
-    const timer = setTimeout(() => {
-      if (value.trim()) {
-        saveSelfSummary(currentSummaryId, false) // 메시지 없이 저장
-      }
-    }, 1500)
-    
-    setAutoSaveTimer(timer)
   }
 
-  // 컴포넌트 언마운트 시 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer)
-      }
+  // blur 시 서버 저장 함수
+  const handleSelfSummaryBlur = (value: string) => {
+    if (value.trim()) {
+      saveSelfSummary(currentSummaryId, false) // 메시지 없이 저장
     }
-  }, [autoSaveTimer])
+  }
+
+
 
   if (loading) {
     return (
@@ -337,6 +322,7 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
           selfSummary={selfSummary}
           isSaving={isSaving}
           handleSelfSummaryChange={handleSelfSummaryChange}
+          handleSelfSummaryBlur={handleSelfSummaryBlur}
         />
       )}
     </div>

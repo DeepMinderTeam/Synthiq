@@ -158,6 +158,8 @@ export default function TopicsPage() {
     }
   }
 
+
+
   const filtered = topics
     .filter(t => t.topic_name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {

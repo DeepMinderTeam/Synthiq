@@ -3,30 +3,35 @@
 'use client'
 
 
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { PaperContent as PaperContentType } from '@/models/paper_contents'
 import { Paper } from '@/models/paper'
 import PaperInfo from './PaperInfo'
 import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
+import { supabase } from '@/lib/supabaseClient'
+import { useAIAnalysis } from '@/context/AIAnalysisContext'
+import React from 'react'
 
 // PdfViewer를 동적으로 import하여 SSR 문제 해결
 const PdfViewer = dynamic(() => import('../pdf/PdfViewer'), { ssr: false })
 
 interface PaperContentProps {
   paperId: string
+  topicId: string
   isCollapsed?: boolean
 }
 
-export default function PaperContent({ paperId, isCollapsed = false }: PaperContentProps) {
+const PaperContent = React.memo(function PaperContent({ paperId, topicId, isCollapsed = false }: PaperContentProps) {
   const [contents, setContents] = useState<PaperContentType[]>([])
   const [paper, setPaper] = useState<Paper | null>(null)
+  const [paperTitle, setPaperTitle] = useState<string>('')
 
   const [activeTab, setActiveTab] = useState<'original' | 'translation'>('original')
-  const [translating, setTranslating] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
+  
+  const { state, startTranslation, completeTranslation } = useAIAnalysis()
+  const { isTranslating, messages } = state
 
   const fetchContents = useCallback(async () => {
     try {
@@ -58,6 +63,7 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
         console.error('논문 정보 로드 오류:', error)
       } else {
         setPaper(data)
+        setPaperTitle(data?.paper_title || '')
       }
     } catch (err) {
       console.error('논문 정보 로드 오류:', err)
@@ -69,11 +75,9 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
     fetchPaper()
   }, [fetchContents, fetchPaper])
 
-  const handleTranslate = async () => {
+  const handleTranslate = useCallback(async () => {
     try {
-      setTranslating(true)
-      setMessage('번역을 생성하고 있습니다...')
-
+      startTranslation(paperId, paperTitle || '논문', topicId)
 
       const response = await fetch('/api/translate-paper', {
         method: 'POST',
@@ -89,19 +93,15 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
         throw new Error(result.error || '번역에 실패했습니다.')
       }
 
-
-      setMessage('번역이 완료되었습니다!')
-      setTimeout(() => setMessage(null), 3000)
+      completeTranslation()
       
       // 번역 후 데이터 새로고침
       fetchContents()
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : '번역 중 오류가 발생했습니다.')
-      setTimeout(() => setMessage(null), 3000)
-    } finally {
-      setTranslating(false)
+      const errorMessage = err instanceof Error ? err.message : '번역 중 오류가 발생했습니다.'
+      console.error('번역 오류:', errorMessage)
     }
-  }
+  }, [paperId, paperTitle, startTranslation, completeTranslation, fetchContents])
 
 
   const handlePageChange = (direction: 'prev' | 'next') => {
@@ -154,10 +154,10 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
             {activeTab === 'translation' && (
               <button
                 onClick={handleTranslate}
-                disabled={translating}
+                disabled={isTranslating}
                 className="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
               >
-                {translating ? '✨ 번역 중...' : '✨ AI 번역'}
+                {isTranslating ? '✨ 번역 중...' : '✨ AI 번역'}
               </button>
             )}
           <div className="flex border border-gray-200 rounded-lg overflow-hidden">
@@ -186,9 +186,9 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
         </div>
       </div>
       
-      {message && (
+      {messages.translation && (
         <div className="px-4 sm:px-6 py-2 bg-blue-50 text-blue-700 text-sm border-b border-blue-100">
-          {message}
+          {messages.translation}
         </div>
       )}
 
@@ -259,4 +259,6 @@ export default function PaperContent({ paperId, isCollapsed = false }: PaperCont
       </div>
     </div>
   )
-} 
+})
+
+export default PaperContent 

@@ -18,9 +18,10 @@ interface SelfSummaryStepProps {
   selfSummary: string
   isSaving: boolean
   handleSelfSummaryChange: (value: string) => void
+  handleSelfSummaryBlur: (value: string) => void
 }
 
-export default function SelfSummaryStep({ selfSummary, isSaving, handleSelfSummaryChange }: SelfSummaryStepProps) {
+export default function SelfSummaryStep({ selfSummary, isSaving, handleSelfSummaryChange, handleSelfSummaryBlur }: SelfSummaryStepProps) {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
@@ -41,6 +42,7 @@ export default function SelfSummaryStep({ selfSummary, isSaving, handleSelfSumma
         <TipTapEditor 
           content={selfSummary}
           onUpdate={handleSelfSummaryChange}
+          onBlur={handleSelfSummaryBlur}
         />
       </div>
     </div>
