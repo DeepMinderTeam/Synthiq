@@ -288,7 +288,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
             {paper?.paper_url && (
               <div className="flex-1 min-h-0">
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">📄</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">논문 PDF</h3>

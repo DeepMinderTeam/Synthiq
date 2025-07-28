@@ -673,22 +673,22 @@ export default function QuizStep({ paperId }: QuizStepProps) {
               >
                   {/* 회차 번호 - 새 퀴즈가 아닐 때만 표시 */}
                   {attempt.attempt_id >= 0 && (
-                    <div className="absolute -top-2 -left-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg">
+                    <div className="absolute top-2 left-2 w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
                       {testAttempts.length - index}
                     </div>
                   )}
                   
                   {/* 새 퀴즈 표시 */}
                   {attempt.attempt_id < 0 && (
-                    <div className="absolute -top-2 -left-2">
-                      <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-md">
                         NEW
                       </span>
                     </div>
                   )}
                   
                   <div className="space-y-2">
-                    <div className="font-semibold text-sm text-gray-800 line-clamp-2 pt-2">
+                    <div className="font-semibold text-sm text-gray-800 line-clamp-2 pt-8">
                   {attempt.test_title}
                 </div>
                     
@@ -840,7 +840,7 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="text-gray-800 text-base font-medium leading-relaxed bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="text-gray-800 text-base font-medium leading-relaxed bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                       {item.quiz_question}
                     </div>
                     

@@ -150,32 +150,58 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
             <ReadingStep paperId={paperId} topicId={topicId} />
           </div>
         ) : (
-                <div className="flex w-full h-full transition-all duration-500 gap-4">
-                  {/* 왼쪽 패널 */}
-                  <div
-                    className={`overflow-hidden transition-all duration-500 ease-in-out 
-                    ${isCollapsed ? 'basis-[6%]' : 'basis-[50%]'}`}
-                  >
-                    <PaperContent
-                      paperId={paperId}
-                      topicId={topicId}
-                      isCollapsed={isCollapsed}
-                    />
+          <div className="flex flex-col lg:flex-row w-full h-full transition-all duration-500 gap-4">
+            {/* 모바일/태블릿: 위쪽에 요약/퀴즈/통계, 아래쪽에 논문 내용 */}
+            <div className="lg:hidden flex flex-col w-full h-full gap-4">
+              {/* 위쪽: 요약/퀴즈/통계 */}
+              <div className="flex-1 min-h-0">
+                <StepContent
+                  currentStep={currentStep}
+                  paperId={paperId}
+                  topicId={topicId}
+                  isPaperContentCollapsed={false}
+                  onTogglePaperContent={() => {}}
+                />
+              </div>
+              
+              {/* 아래쪽: 논문 내용 */}
+              <div className="flex-1 min-h-0">
+                <PaperContent
+                  paperId={paperId}
+                  topicId={topicId}
+                  isCollapsed={false}
+                />
+              </div>
             </div>
 
-                  {/* 오른쪽 패널 */}
-                  <div
-                    className={`overflow-hidden transition-all duration-500 ease-in-out 
-                    ${isCollapsed ? 'basis-[94%]' : 'basis-[50%]'}`}
-                  >
-                                    <StepContent
-                      currentStep={currentStep}
-                      paperId={paperId}
-                      topicId={topicId}
-                      isPaperContentCollapsed={isCollapsed}
-                      onTogglePaperContent={() => setIsCollapsed(!isCollapsed)}
-                    />
+            {/* 데스크톱: 좌우 분할 레이아웃 */}
+            <div className="hidden lg:flex w-full h-full gap-4">
+              {/* 왼쪽 패널 */}
+              <div
+                className={`overflow-hidden transition-all duration-500 ease-in-out 
+                ${isCollapsed ? 'basis-[6%]' : 'basis-[50%]'}`}
+              >
+                <PaperContent
+                  paperId={paperId}
+                  topicId={topicId}
+                  isCollapsed={isCollapsed}
+                />
               </div>
+
+              {/* 오른쪽 패널 */}
+              <div
+                className={`overflow-hidden transition-all duration-500 ease-in-out 
+                ${isCollapsed ? 'basis-[94%]' : 'basis-[50%]'}`}
+              >
+                <StepContent
+                  currentStep={currentStep}
+                  paperId={paperId}
+                  topicId={topicId}
+                  isPaperContentCollapsed={isCollapsed}
+                  onTogglePaperContent={() => setIsCollapsed(!isCollapsed)}
+                />
+              </div>
+            </div>
           </div>
         )}
 
