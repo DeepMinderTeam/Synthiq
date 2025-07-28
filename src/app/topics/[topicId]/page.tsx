@@ -8,9 +8,9 @@ import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 import type { Paper } from '@/models/paper'
-import Sidebar from '@/components/Sidebar'
+import Sidebar from '@/components/layout/Sidebar'
 import { TopBar, Header } from '@/components'
-import PaperCard from '@/components/ui/PaperCard'
+import PaperCard from '@/components/ui/cards/PaperCard'
 import EditPaperModal from '@/components/modals/EditPaperModal'
 import { PdfUploadModal } from '@/components'
 import { ExclamationTriangleIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
@@ -229,7 +229,7 @@ export default function TopicPage() {
 
         <main className="flex-1 bg-gray-50 overflow-y-auto">
           <TopBar />
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
         <Header
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -309,15 +309,15 @@ export default function TopicPage() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full table-fixed">
-                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                    <thead className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-blue-200">
                     <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-2/3">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider w-2/3">
                           논문 정보
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider w-1/4">
                           생성일
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider w-1/12">
                           즐겨찾기
                         </th>
                     </tr>
@@ -367,7 +367,7 @@ export default function TopicPage() {
                               }}
                               className={`p-2 rounded-lg transition-all duration-200 ${
                                 favorites.includes(paper.paper_id)
-                                  ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                                  ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 hover:from-blue-200 hover:to-purple-200' 
                                   : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
                               }`}
                               aria-label="즐겨찾기 토글"
