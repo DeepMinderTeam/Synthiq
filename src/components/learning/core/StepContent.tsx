@@ -103,7 +103,7 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
       const errorMessage = err instanceof Error ? err.message : '퀴즈 생성 중 오류가 발생했습니다.'
       alert(`퀴즈 생성 실패: ${errorMessage}`)
     }
-  }, [paperId, paperTitle, startQuizGeneration, completeQuizGeneration])
+  }, [paperId, paperTitle, topicId, startQuizGeneration, completeQuizGeneration])
 
   const handleGenerateAISummary = useCallback(async () => {
     try {
@@ -132,7 +132,7 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
       const errorMessage = err instanceof Error ? err.message : 'AI 요약 생성 중 오류가 발생했습니다.'
       alert(`AI 요약 생성 실패: ${errorMessage}`)
     }
-  }, [paperId, paperTitle, startSummaryGeneration, completeSummaryGeneration])
+  }, [paperId, paperTitle, topicId, startSummaryGeneration, completeSummaryGeneration])
 
   const renderHeader = () => {
     const toggleButton = onTogglePaperContent && (

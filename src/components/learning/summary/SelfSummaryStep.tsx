@@ -12,6 +12,7 @@ const TipTapEditor = dynamic(() => import('./TipTapEditor'), {
 }) as React.ComponentType<{
   content: string
   onUpdate: (content: string) => void
+  onBlur?: (content: string) => void
 }>
 
 interface SelfSummaryStepProps {

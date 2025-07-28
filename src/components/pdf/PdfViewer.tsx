@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
 // PDF.js 스타일 import
@@ -52,14 +52,8 @@ export default function PdfViewer({ filePath, title }: PdfViewerProps) {
     initPdf()
   }, [])
 
-  useEffect(() => {
-    if (filePath) {
-      getPdfUrl()
-    }
-  }, [filePath])
-
   // PDF URL 생성
-  const getPdfUrl = async () => {
+  const getPdfUrl = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -82,7 +76,13 @@ export default function PdfViewer({ filePath, title }: PdfViewerProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filePath])
+
+  useEffect(() => {
+    if (filePath) {
+      getPdfUrl()
+    }
+  }, [filePath, getPdfUrl])
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages)

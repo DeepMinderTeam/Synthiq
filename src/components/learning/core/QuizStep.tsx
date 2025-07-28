@@ -2,7 +2,7 @@
 // Supabase와 연동하여 실제 데이터베이스에서 퀴즈 정보를 가져와서 표시
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerationModal'
 
@@ -139,27 +139,7 @@ export default function QuizStep({ paperId }: QuizStepProps) {
   // 타이머 훅 사용
   const { seconds, isRunning, startTimer, stopTimer, resetTimer, formatTime } = useTimer()
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        await Promise.all([
-          fetchQuizzes(),
-          fetchTestAttempts()
-        ])
-      } catch (err) {
-        setError('데이터를 불러오는 중 오류가 발생했습니다.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (paperId) {
-      fetchData()
-    }
-  }, [paperId])
-
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = useCallback(async () => {
     try {
       // paper_contents를 통해 연결된 퀴즈들을 가져옴
       const { data, error } = await supabase
@@ -186,9 +166,9 @@ export default function QuizStep({ paperId }: QuizStepProps) {
       console.error('퀴즈 로드 오류:', err)
       setError('퀴즈 정보를 불러오는 중 오류가 발생했습니다.')
     }
-  }
+  }, [paperId])
 
-  const fetchTestAttempts = async () => {
+  const fetchTestAttempts = useCallback(async () => {
     try {
       // 먼저 paper_tests를 가져옴
       const { data: tests, error: testsError } = await supabase
@@ -247,7 +227,27 @@ export default function QuizStep({ paperId }: QuizStepProps) {
     } catch (err) {
       console.error('테스트 시도 로드 오류:', err)
     }
-  }
+  }, [paperId])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        await Promise.all([
+          fetchQuizzes(),
+          fetchTestAttempts()
+        ])
+      } catch (err) {
+        setError('데이터를 불러오는 중 오류가 발생했습니다.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (paperId) {
+      fetchData()
+    }
+  }, [paperId, fetchQuizzes, fetchTestAttempts])
 
   const handleGenerateQuiz = async (options: QuizGenerationOptions) => {
     try {

@@ -11,17 +11,19 @@ export function usePerformanceMonitor(componentName: string) {
   const renderCount = useRef<number>(0)
 
   useEffect(() => {
-    renderStartTime.current = performance.now()
-    renderCount.current++
+    const startTime = performance.now()
+    const currentRenderCount = renderCount.current + 1
+    renderStartTime.current = startTime
+    renderCount.current = currentRenderCount
 
     return () => {
-      const renderTime = performance.now() - renderStartTime.current
+      const renderTime = performance.now() - startTime
       
       // 개발 환경에서만 성능 로그 출력
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Performance] ${componentName}:`, {
           renderTime: `${renderTime.toFixed(2)}ms`,
-          renderCount: renderCount.current,
+          renderCount: currentRenderCount,
           memoryUsage: (performance as any).memory ? {
             used: `${((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB`,
             total: `${((performance as any).memory.totalJSHeapSize / 1024 / 1024).toFixed(2)}MB`

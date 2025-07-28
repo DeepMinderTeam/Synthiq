@@ -101,7 +101,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
       const errorMessage = err instanceof Error ? err.message : '번역 중 오류가 발생했습니다.'
       console.error('번역 오류:', errorMessage)
     }
-  }, [paperId, paperTitle, startTranslation, completeTranslation, fetchContents])
+  }, [paperId, paperTitle, topicId, startTranslation, completeTranslation, fetchContents])
 
 
   const handlePageChange = (direction: 'prev' | 'next') => {

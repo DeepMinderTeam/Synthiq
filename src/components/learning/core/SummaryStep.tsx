@@ -2,7 +2,7 @@
 // Supabase에서 실제 논문 요약 정보를 가져와서 표시
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperSummary } from '@/models/paper_summaries'
 import { Paper } from '@/models/paper'
@@ -25,10 +25,6 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   const [selfSummary, setSelfSummary] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [currentSummaryId, setCurrentSummaryId] = useState<number>(0)
-
-  useEffect(() => {
-    fetchData()
-  }, [paperId])
 
   // 나의 정리노트 탭으로 이동할 때 기존 내용 로드
   useEffect(() => {
@@ -65,7 +61,7 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
     }
   }, [summaries, paperId])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -120,7 +116,11 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [paperId])
+
+  useEffect(() => {
+    fetchData()
+  }, [paperId, fetchData])
 
   const extractPdfText = async () => {
     if (!paper?.paper_url) {

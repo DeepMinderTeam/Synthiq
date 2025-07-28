@@ -107,7 +107,7 @@ export function useOptimizedFetch<T>(
         abortControllerRef.current.abort()
       }
     }
-  }, [url, ttl])
+  }, [url, ttl, options])
 
   const refetch = async () => {
     globalCache.delete(url)
