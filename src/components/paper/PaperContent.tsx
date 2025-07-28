@@ -146,91 +146,133 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
-      <div className="p-4 sm:p-6 border-b border-gray-100">
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm w-full h-full flex flex-col">
+      <div className="p-6 border-b border-blue-200 bg-white/50 backdrop-blur-sm rounded-t-xl">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">논문 내용</h3>
           <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">📄</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800">논문 내용</h3>
+          </div>
+          <div className="flex items-center space-x-4">
             {activeTab === 'translation' && (
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating}
-                className="px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
+                className="px-4 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
               >
-                {isTranslating ? '✨ 번역 중...' : '✨ AI 번역'}
+                {isTranslating ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>번역 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>✨</span>
+                    <span>AI 번역</span>
+                  </>
+                )}
               </button>
             )}
-          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => handleTabChange('original')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeTab === 'original'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              📄 원문 보기
-            </button>
-            <button
-              onClick={() => handleTabChange('translation')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeTab === 'translation'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              🌐 번역 보기
-            </button>
+            <div className="flex border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+              <button
+                onClick={() => handleTabChange('original')}
+                className={`px-4 py-2 text-xs font-medium transition-all duration-200 ${
+                  activeTab === 'original'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-600 hover:text-gray-800 hover:bg-blue-50'
+                }`}
+              >
+                📄 원문 보기
+              </button>
+              <button
+                onClick={() => handleTabChange('translation')}
+                className={`px-4 py-2 text-xs font-medium transition-all duration-200 ${
+                  activeTab === 'translation'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md'
+                    : 'bg-white text-gray-600 hover:text-gray-800 hover:bg-green-50'
+                }`}
+              >
+                🌐 번역 보기
+              </button>
             </div>
           </div>
         </div>
       </div>
       
       {messages.translation && (
-        <div className="px-4 sm:px-6 py-2 bg-blue-50 text-blue-700 text-sm border-b border-blue-100">
-          {messages.translation}
+        <div className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 text-sm border-b border-blue-200">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">💬</span>
+            </div>
+            <span className="font-medium">{messages.translation}</span>
+          </div>
         </div>
       )}
 
-      <div className="flex-1 p-4 sm:p-6 overflow-hidden">
+      <div className="flex-1 p-6 overflow-hidden">
         {activeTab === 'translation' ? (
           <div className="h-full flex flex-col">
             {contents.length > 0 ? (
               <>
                 {/* 페이지네이션 헤더 */}
-                <div className="flex justify-between items-center mb-4 px-2">
+                <div className="flex justify-between items-center mb-6 px-2">
                   <button
                     onClick={() => handlePageChange('prev')}
                     disabled={currentPage === 0}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
                   >
-                    ← 이전
+                    <span>←</span>
+                    <span>이전</span>
                   </button>
-                  <span className="text-sm text-gray-600">
-                    {currentPage + 1} / {contents.length}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">{currentPage + 1}</span>
+                    </div>
+                    <span className="text-sm text-gray-600 font-medium">
+                      / {contents.length}
+                    </span>
+                  </div>
                   <button
                     onClick={() => handlePageChange('next')}
                     disabled={currentPage === contents.length - 1}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
                   >
-                    다음 →
+                    <span>다음</span>
+                    <span>→</span>
                   </button>
                 </div>
                 
                 {/* 현재 페이지 내용 */}
                 <div className="flex-1 overflow-y-auto">
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {contents[currentPage].content_type && (
-                      <div className="text-sm font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                        {contents[currentPage].content_type}
+                      <div className="text-sm font-medium text-blue-800 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">📋</span>
+                          </div>
+                          <span>{contents[currentPage].content_type}</span>
+                        </div>
                       </div>
                     )}
-                    <div className="text-gray-800 prose prose-sm max-w-none" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
                       {contents[currentPage].content_text_eng ? (
-                        <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                        <div className="text-gray-800 prose prose-sm max-w-none">
+                          <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                        </div>
                       ) : (
-                        <div className="text-gray-500">번역이 없습니다. 번역하기 버튼을 눌러주세요.</div>
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <span className="text-gray-500 text-2xl">🌐</span>
+                            </div>
+                            <div className="text-gray-500 font-medium">번역이 없습니다</div>
+                            <div className="text-gray-400 text-sm mt-1">번역하기 버튼을 눌러주세요</div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -241,12 +283,17 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
             )}
           </div>
         ) : (
-          <div className="h-full flex flex-col space-y-4">
+          <div className="h-full flex flex-col space-y-6">
             {paper && <PaperInfo paper={paper} showAbstract={true} />}
             {paper?.paper_url && (
               <div className="flex-1 min-h-0">
-                <h3 className="font-semibold text-gray-700 mb-3">논문 PDF</h3>
-                <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">📄</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">논문 PDF</h3>
+                </div>
+                <div className="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                   <PdfViewer 
                     filePath={paper.paper_url} 
                     title={paper.paper_title}

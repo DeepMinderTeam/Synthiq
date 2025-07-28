@@ -9,5 +9,9 @@ interface ReadingStepProps {
 }
 
 export default function ReadingStep({ paperId, topicId }: ReadingStepProps) {
-  return <PaperContent paperId={paperId} topicId={topicId} />
+  return (
+    <div className="h-full">
+      <PaperContent paperId={paperId} topicId={topicId} />
+    </div>
+  )
 } 

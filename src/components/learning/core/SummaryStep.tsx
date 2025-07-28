@@ -270,11 +270,16 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
 
   if (loading) {
     return (
-      <div className="bg-gray-200 p-6 rounded-lg min-h-96">
-        <h3 className="text-lg font-semibold mb-4">논문 요약</h3>
-        <div className="space-y-2">
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200 shadow-sm min-h-96">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-sm">📝</span>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800">논문 요약</h3>
+        </div>
+        <div className="space-y-3">
           {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="h-4 bg-gray-300 rounded animate-pulse" 
+            <div key={i} className="h-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded-lg animate-pulse" 
                  style={{ width: `${(i % 3) * 25 + 50}%` }} />
           ))}
         </div>
@@ -284,12 +289,19 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
 
   if (error) {
     return (
-      <div className="bg-gray-200 p-6 rounded-lg min-h-96">
-        <h3 className="text-lg font-semibold mb-4">논문 요약</h3>
-        <div className="text-red-500 mb-4">오류: {error}</div>
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200 shadow-sm min-h-96">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-sm">⚠️</span>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800">논문 요약</h3>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="text-red-600 font-medium">오류: {error}</div>
+        </div>
         <button
           onClick={() => setError(null)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold"
         >
           다시 시도
         </button>
@@ -298,33 +310,38 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm h-full flex flex-col">
       {message && (
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
-          {message}
+        <div className="m-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-lg text-sm border border-blue-200 shadow-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">💬</span>
+            </div>
+            <span className="font-medium">{message}</span>
+          </div>
         </div>
       )}
 
+      <div className="flex-1">
+        {/* 탭 내용 */}
+        {activeTab === 'ai' && (
+          <AISummaryStep 
+            summaries={summaries}
+            generating={generating}
+            generateAISummary={generateAISummary}
+          />
+        )}
 
-
-      {/* 탭 내용 */}
-      {activeTab === 'ai' && (
-        <AISummaryStep 
-          summaries={summaries}
-          generating={generating}
-          generateAISummary={generateAISummary}
-        />
-      )}
-
-      {/* 나의 정리노트 탭 내용 */}
-      {activeTab === 'self' && (
-        <SelfSummaryStep 
-          selfSummary={selfSummary}
-          isSaving={isSaving}
-          handleSelfSummaryChange={handleSelfSummaryChange}
-          handleSelfSummaryBlur={handleSelfSummaryBlur}
-        />
-      )}
+        {/* 나의 정리노트 탭 내용 */}
+        {activeTab === 'self' && (
+          <SelfSummaryStep 
+            selfSummary={selfSummary}
+            isSaving={isSaving}
+            handleSelfSummaryChange={handleSelfSummaryChange}
+            handleSelfSummaryBlur={handleSelfSummaryBlur}
+          />
+        )}
+      </div>
     </div>
   )
 } 

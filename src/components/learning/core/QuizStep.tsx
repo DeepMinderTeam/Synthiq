@@ -650,7 +650,7 @@ export default function QuizStep({ paperId }: QuizStepProps) {
 
       {/* 퀴즈 회차 목록 */}
       {testAttempts.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border border-blue-200 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-blue-200 shadow-sm">
           <h3 className="font-semibold mb-6 text-gray-800 flex items-center">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
               <span className="text-white font-bold text-sm">📝</span>

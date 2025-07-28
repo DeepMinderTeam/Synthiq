@@ -156,11 +156,11 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-screen overflow-hidden">
+    <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col h-screen overflow-hidden">
       {/* 사용자 정보 */}
       <div className="p-6 pb-4">
-        <div className="flex items-center p-3 bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+        <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-sm">
             <span className="text-white font-bold text-sm">
               {userName ? userName.charAt(0).toUpperCase() : 'G'}
             </span>
@@ -177,19 +177,21 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
         {/* 최근 본 토픽 */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-3">
-            <Calendar className="w-4 h-4 text-blue-500" />
+            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <Calendar className="w-3 h-3 text-white" />
+            </div>
             <h2 className="text-sm font-semibold text-gray-700">최근 본 토픽</h2>
           </div>
           {loading ? (
             <p className="text-sm text-gray-500 px-2">로딩 중...</p>
           ) : recentTopics.length ? (
             <div className="max-h-32 overflow-y-auto">
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {recentTopics.slice(0, 2).map(topic => (
                   <li
                     key={topic.topic_id}
                     onClick={() => router.push(`/topics/${topic.topic_id}`)}
-                    className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                    className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-2"
                   >
                     <BookOpen className="w-3 h-3 text-gray-400 flex-shrink-0" />
                     <span className="truncate flex-1 min-w-0">{topic.topic_name}</span>
@@ -205,19 +207,21 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
         {/* 최근 본 논문 */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-3">
-            <Calendar className="w-4 h-4 text-purple-500" />
+            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full flex items-center justify-center">
+              <Calendar className="w-3 h-3 text-white" />
+            </div>
             <h2 className="text-sm font-semibold text-gray-700">최근 본 논문</h2>
           </div>
           {loading ? (
             <p className="text-sm text-gray-500 px-2">로딩 중...</p>
           ) : recentPapers.length ? (
             <div className="max-h-32 overflow-y-auto">
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {recentPapers.slice(0, 2).map(paper => (
                   <li
                     key={paper.paper_id}
                     onClick={() => router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)}
-                    className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                    className="text-sm text-gray-700 cursor-pointer hover:text-purple-600 hover:bg-purple-50 px-2 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-2"
                   >
                     <FileText className="w-3 h-3 text-gray-400 flex-shrink-0" />
                     <span className="truncate flex-1 min-w-0">{paper.paper_title}</span>
@@ -233,18 +237,20 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
         {/* 토픽 즐겨찾기 */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-3">
-            <StarSolid className="w-4 h-4 text-yellow-500" />
+            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <StarSolid className="w-3 h-3 text-white" />
+            </div>
             <h2 className="text-sm font-semibold text-gray-700">토픽 즐겨찾기</h2>
           </div>
           {loading ? (
             <p className="text-sm text-gray-500 px-2">로딩 중...</p>
           ) : favoriteTopics.length ? (
             <div className="max-h-40 overflow-y-auto">
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {favoriteTopics.slice(0, 3).map(topic => (
                   <li
                     key={topic.topic_id}
-                    className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
+                    className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-2 group"
                   >
                     <button
                       onClick={(e) => {
@@ -253,7 +259,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
                       }}
                       className="flex-shrink-0 hover:scale-110 transition-transform"
                     >
-                      <StarSolid className="w-3 h-3 text-yellow-500" />
+                      <StarSolid className="w-3 h-3 text-blue-500" />
                     </button>
                     <span 
                       className="truncate flex-1 min-w-0 cursor-pointer"
@@ -273,18 +279,20 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
         {/* 논문 즐겨찾기 */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-3">
-            <StarSolid className="w-4 h-4 text-purple-500" />
+            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full flex items-center justify-center">
+              <StarSolid className="w-3 h-3 text-white" />
+            </div>
             <h2 className="text-sm font-semibold text-gray-700">논문 즐겨찾기</h2>
           </div>
           {loading ? (
             <p className="text-sm text-gray-500 px-2">로딩 중...</p>
           ) : favoritePapers.length ? (
             <div className="max-h-40 overflow-y-auto">
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {favoritePapers.slice(0, 3).map(paper => (
                   <li
                     key={paper.paper_id}
-                    className="text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all duration-200 flex items-center space-x-2 group"
+                    className="text-sm text-gray-700 hover:text-purple-600 hover:bg-purple-50 px-2 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-2 group"
                   >
                     <button
                       onClick={(e) => {

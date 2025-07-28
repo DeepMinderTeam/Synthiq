@@ -180,16 +180,17 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
         )}
 
         {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+          <div className="flex justify-between mt-8 pt-6 border-t border-blue-200">
           <button
             onClick={() => {
                     const index = getCurrentStepIndex()
                     if (index > 0) setCurrentStep(steps[index - 1].key)
             }}
             disabled={currentStep === 'reading'}
-              className="px-6 py-3 bg-gray-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm font-medium shadow-sm"
+              className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
           >
-            이전 단계
+            <span>←</span>
+            <span>이전 단계</span>
           </button>
           <button
             onClick={() => {
@@ -197,9 +198,10 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                     if (index < steps.length - 1) setCurrentStep(steps[index + 1].key)
             }}
             disabled={currentStep === 'stats'}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm"
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
           >
-            다음 단계
+            <span>다음 단계</span>
+            <span>→</span>
           </button>
               </div>
         </div>

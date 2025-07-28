@@ -158,31 +158,47 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
                 <button
                   onClick={handleGenerateAISummary}
                   disabled={isGeneratingSummary}
-                  className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
+                  className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-3 py-2 rounded-lg disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
                 >
-                  {isGeneratingSummary ? '✨ 생성 중...' : '✨ AI 정리노트 생성'}
+                  {isGeneratingSummary ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>생성 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✨</span>
+                      <span>AI 정리노트 생성</span>
+                    </>
+                  )}
                 </button>
               )}
-              <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+              <div className="flex border border-blue-200 rounded-lg overflow-hidden shadow-sm">
                 <button
                   onClick={() => setActiveTab('ai')}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`px-4 py-2 text-xs font-medium transition-all duration-200 flex items-center space-x-2 ${
                     activeTab === 'ai'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                      : 'bg-white text-gray-600 hover:text-gray-800 hover:bg-blue-50'
                   }`}
                 >
-                  🤖 AI_전체정리노트
+                  <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">🤖</span>
+                  </div>
+                  <span>AI 전체 정리노트</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('self')}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`px-4 py-2 text-xs font-medium transition-all duration-200 flex items-center space-x-2 ${
                     activeTab === 'self'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md'
+                      : 'bg-white text-gray-600 hover:text-gray-800 hover:bg-green-50'
                   }`}
                 >
-                  ✏️ 나의정리노트
+                  <div className="w-4 h-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">✏️</span>
+                  </div>
+                  <span>나의 정리노트</span>
                 </button>
               </div>
             </div>
@@ -198,9 +214,19 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
             <button
               onClick={() => setShowQuizModal(true)}
               disabled={isGeneratingQuiz}
-              className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-colors"
+              className="text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 px-3 py-2 rounded-lg disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold flex items-center space-x-2"
             >
-              {isGeneratingQuiz ? '✨ 생성 중...' : '✨ AI 퀴즈 생성'}
+              {isGeneratingQuiz ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>생성 중...</span>
+                </>
+              ) : (
+                <>
+                  <span>✨</span>
+                  <span>AI 퀴즈 생성</span>
+                </>
+              )}
             </button>
           </div>
         )
@@ -230,11 +256,11 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
 
   // 다른 단계에서는 기존 레이아웃 사용
   return (
-    <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
-      <div className="p-4 sm:p-6 border-b border-gray-100">
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm w-full h-full flex flex-col">
+      <div className="p-6 border-b border-blue-200 bg-white/50 backdrop-blur-sm rounded-t-xl">
         {renderHeader()}
       </div>
-      <div className="flex-1 p-4 sm:p-6 overflow-hidden">
+      <div className="flex-1 p-6 overflow-hidden">
         {currentStep === 'summary' && <SummaryStep paperId={paperId} activeTab={activeTab} />}
         {currentStep === 'quiz' && <QuizStep paperId={paperId} />}
         {currentStep === 'stats' && <StatsStep paperId={paperId} />}

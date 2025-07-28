@@ -199,18 +199,18 @@ export default function StatsStep({ paperId }: StatsStepProps) {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-            <div className="h-8 bg-gray-300 rounded animate-pulse mb-2" />
-              <div className="text-sm text-gray-600">로딩 중...</div>
-          </div>
+            <div key={i} className="p-4 sm:p-6 bg-white rounded-xl border border-blue-200 shadow-sm">
+              <div className="h-6 sm:h-8 bg-gradient-to-r from-blue-200 to-purple-200 rounded-lg animate-pulse mb-2 sm:mb-3" />
+              <div className="text-xs sm:text-sm text-gray-500 font-medium">로딩 중...</div>
+            </div>
           ))}
-          </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
-          <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="h-48 sm:h-64 bg-white rounded-xl border border-blue-200 shadow-sm animate-pulse" />
+          <div className="h-48 sm:h-64 bg-white rounded-xl border border-blue-200 shadow-sm animate-pulse" />
         </div>
       </div>
     )
@@ -219,8 +219,16 @@ export default function StatsStep({ paperId }: StatsStepProps) {
   if (error) {
     return (
       <div className="space-y-4">
-        <div className="text-red-500 bg-red-50 p-4 rounded-lg border border-red-200">
-          <strong>오류:</strong> {error}
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-red-200 shadow-sm">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">⚠️</span>
+            </div>
+            <div>
+              <div className="text-red-600 font-semibold text-sm sm:text-base">오류가 발생했습니다</div>
+              <div className="text-red-500 text-xs sm:text-sm mt-1">{error}</div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -230,10 +238,14 @@ export default function StatsStep({ paperId }: StatsStepProps) {
 
   if (!stats) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-400 text-6xl mb-4">📊</div>
-        <h3 className="text-lg font-semibold text-gray-600 mb-2">응시 기록이 없습니다</h3>
-        <p className="text-gray-500">퀴즈를 풀어보시면 통계를 확인할 수 있습니다!</p>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+            <span className="text-gray-500 text-2xl sm:text-4xl">📊</span>
+          </div>
+          <div className="text-gray-600 font-semibold text-base sm:text-lg mb-2">응시 기록이 없습니다</div>
+          <div className="text-gray-500 text-xs sm:text-sm">퀴즈를 풀어보시면 통계를 확인할 수 있습니다!</div>
+        </div>
       </div>
     )
   }
@@ -355,95 +367,138 @@ export default function StatsStep({ paperId }: StatsStepProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto space-y-6">
+    <div className="h-full overflow-y-auto space-y-4 sm:space-y-6">
       {/* 주요 통계 카드 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
-          <div className="text-2xl font-bold text-green-600">{stats.avgScore}%</div>
-          <div className="text-sm text-gray-600">평균 정답률</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">📈</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">평균 정답률</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-green-600">{stats.avgScore}%</div>
         </div>
         
-        <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">⏱️</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">평균 소요시간</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
             {String(stats.avgDurationMinutes).padStart(2, '0')}:{String(stats.avgDurationRemainingSeconds).padStart(2, '0')}
           </div>
-          <div className="text-sm text-gray-600">평균 소요시간</div>
         </div>
         
-        <div className="p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl border border-purple-200">
-          <div className="text-2xl font-bold text-purple-600">{stats.totalAttempts}</div>
-          <div className="text-sm text-gray-600">총 응시 횟수</div>
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">📊</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">총 응시 횟수</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-purple-600">{stats.totalAttempts}</div>
         </div>
         
-        <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200">
-          <div className="text-2xl font-bold text-orange-600">{stats.maxScore}%</div>
-          <div className="text-sm text-gray-600">최고 점수</div>
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">🏆</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">최고 점수</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-orange-600">{stats.maxScore}%</div>
         </div>
       </div>
 
       {/* 추가 통계 카드 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="p-4 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl border border-pink-200">
-          <div className="text-2xl font-bold text-pink-600">{stats.maxStreak}일</div>
-          <div className="text-sm text-gray-600">최장 연속 학습</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-pink-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-pink-500 to-rose-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">🔥</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">최장 연속 학습</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-pink-600">{stats.maxStreak}일</div>
         </div>
         
-        <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-200">
-          <div className="text-2xl font-bold text-indigo-600">{stats.attemptsWithDuration}</div>
-          <div className="text-sm text-gray-600">시간 기록 응시</div>
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-indigo-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">⏰</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">시간 기록 응시</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-indigo-600">{stats.attemptsWithDuration}</div>
         </div>
         
-        <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-200">
-          <div className="text-2xl font-bold text-teal-600">{Math.round((stats.attemptsWithDuration / stats.totalAttempts) * 100)}%</div>
-          <div className="text-sm text-gray-600">시간 기록 비율</div>
+        <div className="p-4 sm:p-6 bg-white rounded-xl border border-teal-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">📋</span>
+            </div>
+            <div className="text-xs sm:text-sm font-medium text-gray-600">시간 기록 비율</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-teal-600">{Math.round((stats.attemptsWithDuration / stats.totalAttempts) * 100)}%</div>
         </div>
       </div>
 
       {/* 차트 섹션 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* 점수 분포 도넛 차트 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+              <span className="text-white font-bold text-xs">📊</span>
+            </div>
             점수 분포
           </h3>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <Doughnut data={scoreDistributionData} options={chartOptions} />
           </div>
         </div>
 
         {/* 시간대별 응시 분포 바 차트 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+              <span className="text-white font-bold text-xs">⏰</span>
+            </div>
             시간대별 응시 분포
           </h3>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <Bar data={timeDistributionData} options={lineChartOptions} />
           </div>
         </div>
-              </div>
+      </div>
 
       {/* 라인 차트 섹션 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* 최근 7일 응시 추이 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+              <span className="text-white font-bold text-xs">📈</span>
+            </div>
             최근 7일 응시 추이
           </h3>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <Line data={dailyAttemptsData} options={lineChartOptions} />
-            </div>
-            </div>
+          </div>
+        </div>
 
         {/* 점수 추이 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+              <span className="text-white font-bold text-xs">📊</span>
+            </div>
             최근 점수 추이
           </h3>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <Line data={scoreTrendData} options={lineChartOptions} />
           </div>
         </div>
@@ -451,23 +506,25 @@ export default function StatsStep({ paperId }: StatsStepProps) {
       
       {/* 최근 응시 기록 */}
       {attempts.length > 0 && (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+              <span className="text-white font-bold text-xs">📋</span>
+            </div>
             최근 응시 기록
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {attempts.slice(0, 5).map((attempt, index) => (
-              <div key={attempt.attempt_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                    (attempt.attempt_score || 0) >= 80 ? 'bg-green-500' :
-                    (attempt.attempt_score || 0) >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+              <div key={attempt.attempt_id} className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-sm ${
+                    (attempt.attempt_score || 0) >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
+                    (attempt.attempt_score || 0) >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-600' : 'bg-gradient-to-r from-red-500 to-pink-600'
                   }`}>
                     {index + 1}
                   </div>
                   <div>
-                    <div className="font-medium text-gray-800">
+                    <div className="font-semibold text-gray-800 text-base sm:text-lg">
                       {attempt.attempt_score || 0}점
                     </div>
                     <div className="text-xs text-gray-500">
@@ -481,18 +538,18 @@ export default function StatsStep({ paperId }: StatsStepProps) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">
                     {attempt.attempt_duration_sec && attempt.attempt_duration_sec > 0 
                       ? `${String(Math.floor(attempt.attempt_duration_sec / 60)).padStart(2, '0')}:${String(attempt.attempt_duration_sec % 60).padStart(2, '0')}` 
                       : '시간 기록 없음'}
                   </div>
-                  <div className={`text-xs font-medium ${
-                    (attempt.attempt_score || 0) >= 80 ? 'text-green-600' :
-                    (attempt.attempt_score || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'
+                  <div className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    (attempt.attempt_score || 0) >= 80 ? 'bg-green-100 text-green-700' :
+                    (attempt.attempt_score || 0) >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
                   }`}>
                     {(attempt.attempt_score || 0) >= 80 ? '우수' : 
                      (attempt.attempt_score || 0) >= 60 ? '양호' : '개선 필요'}
-                </div>
+                  </div>
                 </div>
               </div>
             ))}

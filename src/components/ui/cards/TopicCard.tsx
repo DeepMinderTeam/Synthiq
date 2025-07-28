@@ -73,7 +73,7 @@ export default function TopicCard({
 
   return (
     <div 
-      className="bg-white rounded-3xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group h-64 flex flex-col hover:cursor-pointer"
+      className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl shadow-sm border border-blue-200 hover:shadow-lg hover:border-blue-400 hover:from-blue-100 hover:to-purple-100 transition-all duration-300 group h-64 flex flex-col hover:cursor-pointer"
       onClick={handleCardClick}
     >
       {/* 상단: 제목과 즐겨찾기 */}
@@ -99,7 +99,7 @@ export default function TopicCard({
             onClick={(e) => handleButtonClick(e, handleFavoriteClick)}
             className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
               fav 
-                ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 hover:from-blue-200 hover:to-purple-200' 
                 : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
             }`}
         aria-label="즐겨찾기 토글"
@@ -117,11 +117,11 @@ export default function TopicCard({
       </div>
 
       {/* 하단: 액션 버튼들 */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0 rounded-b-3xl">
+      <div className="px-4 py-3 bg-white/70 backdrop-blur-sm border-t border-blue-200 flex-shrink-0 rounded-b-3xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 min-w-0">
             {fav && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex-shrink-0">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold flex-shrink-0 shadow-sm">
                 즐겨찾기
               </span>
             )}
