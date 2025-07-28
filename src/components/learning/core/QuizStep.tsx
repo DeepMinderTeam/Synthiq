@@ -4,7 +4,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import QuizGenerationModal, { QuizGenerationOptions } from './QuizGenerationModal'
+import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerationModal'
 
 interface QuizStepProps {
   paperId: string

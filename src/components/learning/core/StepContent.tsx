@@ -5,8 +5,8 @@ import { useState } from 'react'
 import ReadingStep from './ReadingStep'
 import SummaryStep from './SummaryStep'
 import QuizStep from './QuizStep'
-import StatsStep from './StatsStep'
-import QuizGenerationModal from './QuizGenerationModal'
+import StatsStep from '../stats/StatsStep'
+import QuizGenerationModal from '../quiz/QuizGenerationModal'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface StepContentProps {
@@ -199,13 +199,18 @@ export default function StepContent({ currentStep, paperId, isPaperContentCollap
     }
   }
 
+  // 논문 읽기 단계에서는 전체 화면 사용
+  if (currentStep === 'reading') {
+    return <ReadingStep paperId={paperId} />
+  }
+
+  // 다른 단계에서는 기존 레이아웃 사용
   return (
     <div className="bg-white rounded-lg shadow-sm w-full h-full flex flex-col">
       <div className="p-4 sm:p-6 border-b border-gray-100">
         {renderHeader()}
       </div>
       <div className="flex-1 p-4 sm:p-6 overflow-hidden">
-        {currentStep === 'reading' && <ReadingStep paperId={paperId} />}
         {currentStep === 'summary' && <SummaryStep paperId={paperId} activeTab={activeTab} />}
         {currentStep === 'quiz' && <QuizStep paperId={paperId} />}
         {currentStep === 'stats' && <StatsStep paperId={paperId} />}

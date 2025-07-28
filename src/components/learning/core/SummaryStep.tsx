@@ -6,8 +6,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { PaperSummary } from '@/models/paper_summaries'
 import { Paper } from '@/models/paper'
-import AISummaryStep from './AISummaryStep'
-import SelfSummaryStep from './SelfSummaryStep'
+import AISummaryStep from '../summary/AISummaryStep'
+import SelfSummaryStep from '../summary/SelfSummaryStep'
 
 interface SummaryStepProps {
   paperId: string

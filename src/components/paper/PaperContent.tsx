@@ -12,7 +12,7 @@ import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 
 // PdfViewer를 동적으로 import하여 SSR 문제 해결
-const PdfViewer = dynamic(() => import('./steps/pdf/PdfViewer'), { ssr: false })
+const PdfViewer = dynamic(() => import('../pdf/PdfViewer'), { ssr: false })
 
 interface PaperContentProps {
   paperId: string

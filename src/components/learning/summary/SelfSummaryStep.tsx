@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 
 // TipTap 에디터를 동적으로 import하여 SSR 문제 해결
-const TipTapEditor = dynamic(() => import('@/components/steps/TipTapEditor'), { 
+const TipTapEditor = dynamic(() => import('./TipTapEditor'), { 
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-64">
