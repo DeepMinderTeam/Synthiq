@@ -71,7 +71,7 @@ export default function AddTopicModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+              className="px-4 py-2 rounded bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
             >
               {loading ? '추가 중...' : '추가'}
             </button>

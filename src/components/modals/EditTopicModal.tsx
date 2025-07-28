@@ -45,7 +45,7 @@ export default function EditTopicModal({ topic, onClose, onSave }: EditTopicModa
           <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
             취소
           </button>
-          <button onClick={handleSave} className="px-4 py-2 bg-blue-500 text-white rounded">
+          <button onClick={handleSave} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded">
             저장
           </button>
         </div>

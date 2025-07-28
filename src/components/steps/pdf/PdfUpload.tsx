@@ -227,11 +227,7 @@ export default function PdfUpload({ topicId, onUploadSuccess, onUploadError }: P
           ⚠️ PDF API 서버에 연결할 수 없습니다. PDF 텍스트 추출 기능이 제한됩니다.
         </div>
       )}
-      {apiStatus === 'online' && (
-        <div className="mb-4 p-2 bg-green-100 text-green-800 rounded text-sm">
-          ✅ PDF API 서버 연결됨
-        </div>
-      )}
+      
 
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
