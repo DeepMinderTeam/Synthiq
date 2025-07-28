@@ -4,7 +4,7 @@ interface QuizGradingRequest {
   quizId: number
   userAnswer: string
   correctAnswer: string
-  questionType: 'short_answer' | 'essay'
+  questionType: 'short_answer' | 'essay' | 'code_understanding'
   questionText: string
 }
 
@@ -56,6 +56,7 @@ async function gradeWithAI(params: { userAnswer: string; correctAnswer: string; 
             채점 기준:
             - 단답형: 핵심 키워드와 의미가 일치하는지 확인
             - 서술형: 내용의 정확성, 완성도, 논리성을 종합적으로 평가
+            - 코드 이해: 코드 분석의 정확성과 이해도를 평가
             
             응답 형식:
             {
@@ -70,7 +71,7 @@ async function gradeWithAI(params: { userAnswer: string; correctAnswer: string; 
             content: `문제: ${questionText}
             정답: ${correctAnswer}
             학생 답변: ${userAnswer}
-            문제 유형: ${questionType === 'short_answer' ? '단답형' : '서술형'}
+            문제 유형: ${questionType === 'short_answer' ? '단답형' : questionType === 'code_understanding' ? '코드 이해' : '서술형'}
             
             위 정보를 바탕으로 채점해주세요.`
           }
@@ -145,6 +146,19 @@ function fallbackGrading(userAnswer: string, correctAnswer: string, questionType
       isCorrect,
       score: Math.round(accuracy * 100),
       feedback: isCorrect ? '정답입니다!' : '틀렸습니다.',
+      explanation: `정답: ${correctAnswer}`
+    }
+  } else if (questionType === 'code_understanding') {
+    // 코드 이해: 키워드와 길이 기반
+    const lengthScore = Math.min(100, (userAnswer.length / 30) * 100)
+    const keywordScore = userAnswerLower.includes(correctAnswerLower) ? 60 : 0
+    const totalScore = Math.round((lengthScore + keywordScore) / 2)
+    const isCorrect = totalScore > 50
+
+    return {
+      isCorrect,
+      score: totalScore,
+      feedback: isCorrect ? '코드를 잘 이해했습니다!' : '코드 분석을 더 자세히 해보세요.',
       explanation: `정답: ${correctAnswer}`
     }
   } else {

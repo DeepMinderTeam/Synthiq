@@ -7,4 +7,5 @@ export interface PaperQuiz {
   quiz_choices?: any; // 선택지(JSON, 객관식일 경우)
   quiz_answer: string; // 정답
   quiz_explanation?: string; // 해설
+  quiz_category?: string; // 퀴즈 카테고리(예: 개념 이해, 원리 및 구조 등)
 } 

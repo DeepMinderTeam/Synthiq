@@ -1,4 +1,6 @@
 import '@/app/globals.css'
+import { AIAnalysisProvider } from '@/context/AIAnalysisContext'
+import AIProgressIndicator from '@/components/ui/AIProgressIndicator'
 export const metadata = {
   title: 'Synthiq - AI 논문 학습 플랫폼',
   description: 'AI를 활용한 논문 학습 및 퀴즈 생성 플랫폼',
@@ -48,7 +50,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AIAnalysisProvider>
+          {children}
+          <AIProgressIndicator />
+        </AIAnalysisProvider>
+      </body>
     </html>
   )
 }
