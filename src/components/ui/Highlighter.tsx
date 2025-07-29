@@ -142,6 +142,14 @@ export default function Highlighter({
             span.setAttribute('data-highlight-id', highlight.id.toString())
             span.textContent = highlight.text
             
+            // 우클릭 이벤트 추가
+            span.addEventListener('contextmenu', (e) => {
+              e.preventDefault()
+              if (confirm('이 하이라이트를 삭제하시겠습니까?')) {
+                removeHighlight(highlight.id)
+              }
+            })
+            
             const parent = textNode.parentNode
             if (parent) {
               const fragment = document.createDocumentFragment()
@@ -188,6 +196,8 @@ export default function Highlighter({
       saveHighlights()
     }
   }, [highlights, saveHighlights])
+
+
 
   // 텍스트 선택 이벤트 처리
   const handleMouseUp = useCallback(() => {
@@ -241,8 +251,16 @@ export default function Highlighter({
     // 선택된 텍스트를 하이라이트로 감싸기
     const span = document.createElement('span')
     span.className = `highlight ${color} cursor-pointer`
-    span.setAttribute('data-highlight-id', newHighlight.id)
+    span.setAttribute('data-highlight-id', newHighlight.id.toString())
     span.textContent = text
+    
+    // 우클릭 이벤트 추가
+    span.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      if (confirm('이 하이라이트를 삭제하시겠습니까?')) {
+        removeHighlight(newHighlight.id)
+      }
+    })
 
     range.deleteContents()
     range.insertNode(span)
@@ -266,7 +284,7 @@ export default function Highlighter({
     try {
       // 데이터베이스에서 하이라이트 삭제
       if (onDeleteHighlight) {
-        await onDeleteHighlight(highlightId)
+        await onDeleteHighlight(highlightId.toString())
       }
 
       // DOM에서 하이라이트 제거
@@ -287,6 +305,14 @@ export default function Highlighter({
       alert('하이라이트 삭제에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
     }
   }, [onDeleteHighlight])
+
+  // 하이라이트 우클릭 시 삭제
+  const handleHighlightContextMenu = useCallback((e: React.MouseEvent, highlightId: string | number) => {
+    e.preventDefault() // 기본 우클릭 메뉴 방지
+    if (confirm('이 하이라이트를 삭제하시겠습니까?')) {
+      removeHighlight(highlightId)
+    }
+  }, [removeHighlight])
 
   // 하이라이트 클릭 이벤트
   const handleHighlightClick = useCallback((e: React.MouseEvent) => {
