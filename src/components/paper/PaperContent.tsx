@@ -36,7 +36,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
   const { isTranslating, messages } = state
 
   // 하이라이트 기능
-  const { highlights, createHighlight, deleteHighlight, loading: highlightsLoading } = useHighlights({
+  const { highlights, createHighlight, deleteHighlight, loading: highlightsLoading, error: highlightsError } = useHighlights({
     paperId,
     contentId: contents[currentPage]?.content_id?.toString()
   })
@@ -220,6 +220,29 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
         </div>
       )}
 
+      {/* 하이라이트 상태 표시 */}
+      {highlightsError && (
+        <div className="px-6 py-3 bg-gradient-to-r from-red-50 to-pink-50 text-red-700 text-sm border-b border-red-200">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">⚠️</span>
+            </div>
+            <span className="font-medium">하이라이트 오류: {highlightsError}</span>
+          </div>
+        </div>
+      )}
+
+      {highlightsLoading && (
+        <div className="px-6 py-3 bg-gradient-to-r from-yellow-50 to-orange-50 text-yellow-700 text-sm border-b border-yellow-200">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">⏳</span>
+            </div>
+            <span className="font-medium">하이라이트 저장 중...</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 p-6 overflow-hidden">
         {activeTab === 'translation' ? (
           <div className="h-full flex flex-col">
@@ -271,20 +294,34 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                         <div className="text-gray-800 prose prose-sm max-w-none">
                           <Highlighter
                             contentId={contents[currentPage].content_id?.toString()}
+                            initialHighlights={highlights}
+                            onDeleteHighlight={async (highlightId) => {
+                              // 하이라이트 ID를 숫자로 변환하여 deleteHighlight 호출
+                              const numericId = typeof highlightId === 'string' ? parseInt(highlightId) : highlightId
+                              if (!isNaN(numericId)) {
+                                await deleteHighlight(numericId)
+                              }
+                            }}
                             onHighlightChange={async (newHighlights) => {
-                              // 새로운 하이라이트가 추가되면 서버에 저장
-                              const lastHighlight = newHighlights[newHighlights.length - 1]
-                              if (lastHighlight && !highlights.find(h => h.highlight_id.toString() === lastHighlight.id)) {
-                                try {
-                                  await createHighlight({
-                                    contentId: contents[currentPage].content_id,
-                                    text: lastHighlight.text,
-                                    color: lastHighlight.color,
-                                    startOffset: lastHighlight.startOffset,
-                                    endOffset: lastHighlight.endOffset
-                                  })
-                                } catch (error) {
-                                  console.error('하이라이트 저장 오류:', error)
+                              console.log('하이라이트 저장 요청:', newHighlights)
+                              
+                              // 모든 새로운 하이라이트를 서버에 저장
+                              for (const highlight of newHighlights) {
+                                if (!highlights.find(h => h.highlight_id.toString() === highlight.id)) {
+                                  console.log('하이라이트 저장 시도:', highlight)
+                                  try {
+                                    const result = await createHighlight({
+                                      contentId: contents[currentPage].content_id,
+                                      text: highlight.text,
+                                      color: highlight.color,
+                                      startOffset: highlight.startOffset,
+                                      endOffset: highlight.endOffset
+                                    })
+                                    console.log('하이라이트 저장 성공:', result)
+                                  } catch (error) {
+                                    console.error('하이라이트 저장 오류:', error)
+                                    alert('하이라이트 저장에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
+                                  }
                                 }
                               }
                             }}

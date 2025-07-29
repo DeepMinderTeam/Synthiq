@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { PaperHighlight, CreateHighlightRequest, UpdateHighlightRequest } from '@/models/paper_highlights'
+import { supabase } from '@/lib/supabaseClient'
 
 interface UseHighlightsProps {
   paperId: string
@@ -45,11 +46,21 @@ export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps
     setLoading(true)
     setError(null)
 
+    console.log('하이라이트 생성 요청:', { ...highlightData, paperId: parseInt(paperId) })
+
     try {
+      // Supabase 클라이언트에서 세션 가져오기
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        throw new Error('로그인이 필요합니다.')
+      }
+
       const response = await fetch('/api/highlights', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           ...highlightData,
@@ -57,7 +68,9 @@ export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps
         }),
       })
 
+      console.log('API 응답 상태:', response.status)
       const data = await response.json()
+      console.log('API 응답 데이터:', data)
 
       if (!response.ok) {
         throw new Error(data.error || '하이라이트를 생성할 수 없습니다.')
@@ -65,6 +78,7 @@ export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps
 
       // 새 하이라이트를 목록에 추가
       setHighlights(prev => [...prev, data.highlight])
+      console.log('하이라이트 목록 업데이트됨:', data.highlight)
       return data.highlight
     } catch (err) {
       console.error('하이라이트 생성 오류:', err)
@@ -116,8 +130,16 @@ export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps
     setError(null)
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('로그인이 필요합니다.')
+      }
+
       const response = await fetch(`/api/highlights?highlightId=${highlightId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       })
 
       const data = await response.json()
