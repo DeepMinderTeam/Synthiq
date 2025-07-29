@@ -15,7 +15,7 @@ interface HighlighterProps {
   children: React.ReactNode
   onHighlightChange?: (highlights: Highlight[]) => void
   onDeleteHighlight?: (highlightId: string) => Promise<void>
-  onNavigateToPage?: (contentId: string) => void
+  onNavigateToPage?: (contentId: string, highlightInfo?: { highlightId: string; text: string }) => void
   initialHighlights?: Highlight[]
   currentContentId?: string
   targetHighlightInfo?: { evidence: string; startIndex: number; endIndex: number }
@@ -57,7 +57,7 @@ export default function Highlighter({
     
     // 기존 하이라이트를 DOM에 렌더링 (현재 페이지의 하이라이트만)
     if (initialHighlights.length > 0 && containerRef.current) {
-      // DOM이 완전히 렌더링된 후 하이라이트 적용
+      // DOM이 완전히 렌더링된 후 하이라이트 적용 (더 짧은 대기 시간으로 부드러운 전환)
       const timer = setTimeout(() => {
         // 현재 페이지의 하이라이트만 렌더링 (contentId가 없거나 현재 페이지의 contentId와 일치하는 것)
         const currentPageHighlights = initialHighlights.filter(highlight => 
@@ -65,7 +65,7 @@ export default function Highlighter({
         )
         console.log('현재 페이지 하이라이트 렌더링:', currentPageHighlights)
         renderExistingHighlights(currentPageHighlights)
-      }, 300) // 시간을 더 늘려서 DOM 렌더링 완료 대기
+      }, 100) // 대기 시간을 줄여서 더 빠른 전환
       
       return () => clearTimeout(timer)
     }
@@ -342,7 +342,7 @@ export default function Highlighter({
     }
   }, [targetHighlightInfo, getTextNodes])
 
-          // 기존 하이라이트를 DOM에서 제거하는 함수
+          // 기존 하이라이트를 DOM에서 제거하는 함수 (필요한 경우에만 사용)
   const clearExistingHighlights = useCallback(() => {
     if (!containerRef.current) return
 
@@ -362,60 +362,82 @@ export default function Highlighter({
   const renderExistingHighlights = useCallback((highlightsToRender: Highlight[]) => {
     if (!containerRef.current) return
 
-    // 먼저 기존 하이라이트를 모두 제거
-    clearExistingHighlights()
-
-    // 하이라이트 제거 후 잠시 대기 후 텍스트 노드 다시 찾기
-    setTimeout(() => {
-      const container = containerRef.current
-      if (!container) return
+    const container = containerRef.current
+    
+    // 현재 DOM에 있는 하이라이트 요소들의 ID를 수집
+    const existingHighlightIds = new Set<string>()
+    const existingHighlights = container.querySelectorAll('.highlight')
+    existingHighlights.forEach(el => {
+      const id = el.getAttribute('data-highlight-id')
+      if (id) existingHighlightIds.add(id)
+    })
+    
+    // 새로 렌더링할 하이라이트들의 ID를 수집
+    const newHighlightIds = new Set(highlightsToRender.map(h => h.id.toString()))
+    
+    // 더 이상 필요하지 않은 하이라이트만 제거 (부드러운 전환을 위해)
+    existingHighlights.forEach(highlightElement => {
+      const id = highlightElement.getAttribute('data-highlight-id')
+      if (id && !newHighlightIds.has(id)) {
+        const parent = highlightElement.parentNode
+        if (parent) {
+          const textNode = document.createTextNode(highlightElement.textContent || '')
+          parent.replaceChild(textNode, highlightElement)
+        }
+      }
+    })
+    
+    // 새로운 하이라이트들을 렌더링 (이미 있는 것은 건너뛰기)
+    const textNodes = getTextNodes(container)
+    
+    highlightsToRender.forEach(highlight => {
+      // 이미 DOM에 있는 하이라이트는 건너뛰기
+      if (existingHighlightIds.has(highlight.id.toString())) {
+        return
+      }
       
-      const textNodes = getTextNodes(container)
-      
-      highlightsToRender.forEach(highlight => {
-        // 텍스트 노드에서 하이라이트 텍스트 찾기
-        for (const textNode of textNodes) {
-          const text = textNode.textContent || ''
-          const index = text.indexOf(highlight.text)
+      // 텍스트 노드에서 하이라이트 텍스트 찾기
+      for (const textNode of textNodes) {
+        const text = textNode.textContent || ''
+        const index = text.indexOf(highlight.text)
+        
+        if (index !== -1) {
+          // 텍스트를 분할하여 하이라이트 적용
+          const beforeText = text.substring(0, index)
+          const afterText = text.substring(index + highlight.text.length)
           
-          if (index !== -1) {
-            // 텍스트를 분할하여 하이라이트 적용
-            const beforeText = text.substring(0, index)
-            const afterText = text.substring(index + highlight.text.length)
-            
-            const span = document.createElement('span')
-            span.className = `highlight ${highlight.color} cursor-pointer`
-            span.setAttribute('data-highlight-id', highlight.id.toString())
-            span.textContent = highlight.text
-            
-            // 우클릭 이벤트 추가
-            span.addEventListener('contextmenu', (e) => {
-              e.preventDefault()
-              if (confirm('이 하이라이트를 삭제하시겠습니까?')) {
-                removeHighlight(highlight.id)
-              }
-            })
-            
-            const parent = textNode.parentNode
-            if (parent) {
-              const fragment = document.createDocumentFragment()
-              
-              if (beforeText) {
-                fragment.appendChild(document.createTextNode(beforeText))
-              }
-              fragment.appendChild(span)
-              if (afterText) {
-                fragment.appendChild(document.createTextNode(afterText))
-              }
-              
-              parent.replaceChild(fragment, textNode)
-              break
+          const span = document.createElement('span')
+          span.className = `highlight ${highlight.color} cursor-pointer`
+          span.setAttribute('data-highlight-id', highlight.id.toString())
+          span.textContent = highlight.text
+          
+          // 우클릭 이벤트 추가
+          span.addEventListener('contextmenu', (e) => {
+            e.preventDefault()
+            if (confirm('이 하이라이트를 삭제하시겠습니까?')) {
+              removeHighlight(highlight.id)
             }
+          })
+          
+          const parent = textNode.parentNode
+          if (parent) {
+            const fragment = document.createDocumentFragment()
+            
+            if (beforeText) {
+              fragment.appendChild(document.createTextNode(beforeText))
+            }
+            fragment.appendChild(span)
+            if (afterText) {
+              fragment.appendChild(document.createTextNode(afterText))
+            }
+            
+            parent.replaceChild(fragment, textNode)
+            break
           }
         }
-      })
-    }, 50)
-  }, [clearExistingHighlights])
+      }
+    })
+  }, [getTextNodes])
 
   // 하이라이트 변경 시 콜백 호출 (자동 저장 비활성화)
   // useEffect(() => {
@@ -685,8 +707,11 @@ export default function Highlighter({
                           highlightElement.classList.remove('ring-2', 'ring-yellow-400', 'ring-opacity-75')
                         }, 2000)
                       } else if (highlight.contentId && onNavigateToPage) {
-                        // 다른 페이지에 있으면 해당 페이지로 이동
-                        onNavigateToPage(highlight.contentId)
+                        // 다른 페이지에 있으면 해당 페이지로 이동하고 스크롤할 하이라이트 정보 전달
+                        onNavigateToPage(highlight.contentId, {
+                          highlightId: highlight.id.toString(),
+                          text: highlight.text
+                        })
                       }
                     }}
                     className="mt-2 w-full px-2 py-1 text-xs bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 rounded hover:from-blue-100 hover:to-purple-100 transition-all duration-200 border border-blue-200"

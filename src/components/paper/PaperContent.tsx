@@ -36,6 +36,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
   
   // 전체 논문 검색 결과를 저장할 상태
   const [processedTargetHighlightInfo, setProcessedTargetHighlightInfo] = useState<{ evidence: string; startIndex: number; endIndex: number } | undefined>(undefined)
+  const [scrollToHighlightId, setScrollToHighlightId] = useState<string | null>(null)
   
   const { state, startTranslation, completeTranslation } = useAIAnalysis()
   const { isTranslating, messages } = state
@@ -194,6 +195,31 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
       setProcessedTargetHighlightInfo(undefined)
     }
   }, [targetHighlightInfo, contents])
+
+  // scrollToHighlightId가 설정되면 해당 하이라이트로 스크롤
+  useEffect(() => {
+    if (scrollToHighlightId) {
+      // 하이라이트가 렌더링될 시간을 기다린 후 스크롤
+      const timer = setTimeout(() => {
+        const highlightElement = document.querySelector(`[data-highlight-id="${scrollToHighlightId}"]`)
+        if (highlightElement) {
+          highlightElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          })
+          // 하이라이트 요소에 잠깐 포커스 효과 추가
+          highlightElement.classList.add('ring-2', 'ring-yellow-400', 'ring-opacity-75')
+          setTimeout(() => {
+            highlightElement.classList.remove('ring-2', 'ring-yellow-400', 'ring-opacity-75')
+          }, 2000)
+        }
+        // 스크롤 완료 후 ID 초기화
+        setScrollToHighlightId(null)
+      }, 800) // 하이라이트 렌더링 완료 대기
+      
+      return () => clearTimeout(timer)
+    }
+  }, [scrollToHighlightId])
 
   const handleTranslate = useCallback(async () => {
     try {
@@ -404,11 +430,16 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                       contentId: h.highlight_content_id?.toString()
                     }))}
                     targetHighlightInfo={processedTargetHighlightInfo}
-                    onNavigateToPage={(contentId) => {
+                    onNavigateToPage={(contentId, highlightInfo) => {
                       // 해당 contentId의 페이지로 이동
                       const targetPageIndex = contents.findIndex(content => content.content_id === parseInt(contentId))
                       if (targetPageIndex !== -1) {
                         setCurrentPage(targetPageIndex)
+                        
+                        // 하이라이트 정보가 있으면 스크롤할 하이라이트 ID 설정
+                        if (highlightInfo) {
+                          setScrollToHighlightId(highlightInfo.highlightId)
+                        }
                       }
                     }}
                     onDeleteHighlight={async (highlightId) => {

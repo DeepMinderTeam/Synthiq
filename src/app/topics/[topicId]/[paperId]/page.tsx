@@ -2,8 +2,9 @@
 
 import { usePaperStore, type LearningStep } from '@/hooks/paperStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useRecentViews } from '@/hooks/useRecentViews'
 import { useRouter } from 'next/navigation'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { CheckIcon } from '@heroicons/react/24/solid'
 import { PaperContent, StepContent, ReadingStep, TopBar } from '@/components'
 import Sidebar from '@/components/layout/Sidebar'
@@ -84,9 +85,17 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
   const [targetHighlightInfo, setTargetHighlightInfo] = useState<{ evidence: string; startIndex: number; endIndex: number } | undefined>(undefined)
 
   const { user } = useAuth()
+  const { updateRecentView } = useRecentViews()
   const router = useRouter()
 
   const { paperId, topicId } = params
+
+  // 논문 페이지에 접근할 때 최근 본 기록 업데이트
+  useEffect(() => {
+    if (user?.id && paperId) {
+      updateRecentView('paper', parseInt(paperId))
+    }
+  }, [user?.id, paperId, updateRecentView])
 
   // 퀴즈에서 틀린 문제의 근거로 이동하는 함수
   const handleNavigateToReadingStep = useCallback((contentId?: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => {

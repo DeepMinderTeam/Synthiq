@@ -8,6 +8,7 @@ import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { BookOpen, FileText, Calendar } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useSidebar } from '@/context/SidebarContext'
+import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 
 type SidebarProps = { userName?: string; userEmail?: string }
@@ -29,6 +30,7 @@ interface Paper {
 
 export default function Sidebar({ userName, userEmail }: SidebarProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const { recent, favorites, handleTopicClick, toggleFavorite } = useSidebar()
   const [favoriteTopics, setFavoriteTopics] = useState<Topic[]>([])
   const [favoritePapers, setFavoritePapers] = useState<Paper[]>([])
@@ -48,7 +50,15 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
     
-    return () => window.removeEventListener('resize', checkScreenSize)
+    // 주기적으로 최근 본 목록 새로고침 (30초마다)
+    const interval = setInterval(() => {
+      fetchRecentViews()
+    }, 30000)
+    
+    return () => {
+      window.removeEventListener('resize', checkScreenSize)
+      clearInterval(interval)
+    }
   }, [])
 
   const fetchFavorites = async () => {
@@ -190,7 +200,21 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
                 {recentTopics.slice(0, 2).map(topic => (
                   <li
                     key={topic.topic_id}
-                    onClick={() => router.push(`/topics/${topic.topic_id}`)}
+                    onClick={() => {
+                      // 최근 본 기록 업데이트
+                      if (user?.id) {
+                        fetch(`/api/update-recent-view`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: user.id,
+                            type: 'topic',
+                            itemId: topic.topic_id
+                          })
+                        })
+                      }
+                      router.push(`/topics/${topic.topic_id}`)
+                    }}
                     className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-2"
                   >
                     <BookOpen className="w-3 h-3 text-gray-400 flex-shrink-0" />
@@ -220,7 +244,21 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
                 {recentPapers.slice(0, 2).map(paper => (
                   <li
                     key={paper.paper_id}
-                    onClick={() => router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)}
+                    onClick={() => {
+                      // 최근 본 기록 업데이트
+                      if (user?.id) {
+                        fetch(`/api/update-recent-view`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: user.id,
+                            type: 'paper',
+                            itemId: paper.paper_id
+                          })
+                        })
+                      }
+                      router.push(`/topics/${paper.paper_topic_id}/${paper.paper_id}`)
+                    }}
                     className="text-sm text-gray-700 cursor-pointer hover:text-purple-600 hover:bg-purple-50 px-2 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-2"
                   >
                     <FileText className="w-3 h-3 text-gray-400 flex-shrink-0" />

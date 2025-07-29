@@ -4,13 +4,25 @@
 
 /* 하이라이트 스타일 */
 .highlight {
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out;
   border-radius: 3px;
   padding: 2px 4px;
   margin: 0 1px;
   display: inline;
   position: relative;
   cursor: pointer;
+  animation: highlightFadeIn 0.3s ease-in-out;
+}
+
+@keyframes highlightFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .highlight:hover {
