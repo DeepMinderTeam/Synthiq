@@ -19,9 +19,10 @@ interface StepContentProps {
   isPaperContentCollapsed?: boolean
   onTogglePaperContent?: () => void
   onNavigateToReadingStep?: (contentId?: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
+  onShowEvidenceInPaper?: (contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
 }
 
-const StepContent = React.memo(function StepContent({ currentStep, paperId, topicId, isPaperContentCollapsed, onTogglePaperContent, onNavigateToReadingStep }: StepContentProps) {
+const StepContent = React.memo(function StepContent({ currentStep, paperId, topicId, isPaperContentCollapsed, onTogglePaperContent, onNavigateToReadingStep, onShowEvidenceInPaper }: StepContentProps) {
   const [activeTab, setActiveTab] = useState<'ai' | 'self'>('ai')
   const [showQuizModal, setShowQuizModal] = useState(false)
   const [paperTitle, setPaperTitle] = useState<string>('')
@@ -298,10 +299,11 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
       </div>
       <div className="flex-1 p-6 overflow-hidden">
         {currentStep === 'summary' && <SummaryStep paperId={paperId} activeTab={activeTab} />}
-        {currentStep === 'quiz' && (
+                               {currentStep === 'quiz' && (
           <QuizStep 
             paperId={paperId} 
-            onNavigateToContent={handleNavigateToContent}
+            onNavigateToContent={onNavigateToReadingStep}
+            onShowEvidenceInPaper={onShowEvidenceInPaper}
             isTranslationActive={isTranslationActive}
           />
         )}

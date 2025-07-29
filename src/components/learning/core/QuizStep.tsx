@@ -9,6 +9,7 @@ import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerati
 interface QuizStepProps {
   paperId: string
   onNavigateToContent?: (contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
+  onShowEvidenceInPaper?: (contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
   isTranslationActive?: boolean
 }
 
@@ -130,7 +131,7 @@ const useTimer = () => {
   return { seconds, isRunning, startTimer, stopTimer, resetTimer, formatTime }
 }
 
-export default function QuizStep({ paperId, onNavigateToContent, isTranslationActive = false }: QuizStepProps) {
+export default function QuizStep({ paperId, onNavigateToContent, onShowEvidenceInPaper, isTranslationActive = false }: QuizStepProps) {
   const [quizzes, setQuizzes] = useState<PaperQuiz[]>([])
   const [testAttempts, setTestAttempts] = useState<TestAttempt[]>([])
   const [currentAttempt, setCurrentAttempt] = useState<TestAttempt | null>(null)
@@ -537,7 +538,7 @@ export default function QuizStep({ paperId, onNavigateToContent, isTranslationAc
         }
 
         // 틀린 문제인 경우 근거를 미리 찾기
-        let evidenceData = {}
+        let evidenceData: { evidence?: string; contentId?: number; startIndex?: number; endIndex?: number } = {}
         if (!isCorrect) {
           console.log('틀린 문제 근거 찾기 시작:', quiz.quiz_question.substring(0, 30))
           evidenceData = await findEvidenceForWrongAnswer(quiz)
@@ -552,10 +553,10 @@ export default function QuizStep({ paperId, onNavigateToContent, isTranslationAc
           attempt_feedback: feedback,
           attempt_explanation: explanation,
           // 근거 정보 추가
-          attempt_item_evidence: evidenceData.evidence,
-          attempt_item_evidence_content_id: evidenceData.contentId,
-          attempt_item_evidence_start_index: evidenceData.startIndex,
-          attempt_item_evidence_end_index: evidenceData.endIndex
+          attempt_item_evidence: evidenceData.evidence || null,
+          attempt_item_evidence_content_id: evidenceData.contentId || null,
+          attempt_item_evidence_start_index: evidenceData.startIndex || null,
+          attempt_item_evidence_end_index: evidenceData.endIndex || null
         })
       }
 
@@ -1007,13 +1008,21 @@ export default function QuizStep({ paperId, onNavigateToContent, isTranslationAc
                                 if (item.attempt_item_evidence && item.attempt_item_evidence_content_id) {
                                   console.log('저장된 근거 사용:', item.attempt_item_evidence.substring(0, 50))
                                   
-                                  // 저장된 근거로 페이지 이동
-                                  if (onNavigateToContent) {
-                                    onNavigateToContent(item.attempt_item_evidence_content_id, {
+                                  // 저장된 근거로 옆 논문에서 표시
+                                  console.log('저장된 근거로 옆 논문에서 표시 시도:', {
+                                    contentId: item.attempt_item_evidence_content_id,
+                                    evidence: item.attempt_item_evidence.substring(0, 50)
+                                  })
+                                  
+                                  if (onShowEvidenceInPaper) {
+                                    onShowEvidenceInPaper(item.attempt_item_evidence_content_id, {
                                       evidence: item.attempt_item_evidence,
                                       startIndex: item.attempt_item_evidence_start_index || 0,
                                       endIndex: item.attempt_item_evidence_end_index || 0
                                     })
+                                    console.log('onShowEvidenceInPaper 호출 완료')
+                                  } else {
+                                    console.log('onShowEvidenceInPaper가 정의되지 않음')
                                   }
                                 } else {
                                   // 저장된 근거가 없으면 실시간으로 찾기
@@ -1074,13 +1083,21 @@ export default function QuizStep({ paperId, onNavigateToContent, isTranslationAc
                                   }
 
                                   if (result.evidence) {
-                                    // 근거를 찾았으면 해당 페이지로 이동하고 하이라이트 정보도 전달
-                                    if (onNavigateToContent) {
-                                      onNavigateToContent(contentId, {
+                                    // 근거를 찾았으면 옆 논문에서 표시
+                                    console.log('실시간 근거 찾기 성공, 옆 논문에서 표시 시도:', {
+                                      contentId,
+                                      evidence: result.evidence.substring(0, 50)
+                                    })
+                                    
+                                    if (onShowEvidenceInPaper) {
+                                      onShowEvidenceInPaper(contentId, {
                                         evidence: result.evidence,
                                         startIndex: result.startIndex,
                                         endIndex: result.endIndex
                                       })
+                                      console.log('실시간 근거 onShowEvidenceInPaper 호출 완료')
+                                    } else {
+                                      console.log('실시간 근거 onShowEvidenceInPaper가 정의되지 않음')
                                     }
                                   } else {
                                     alert('이 문제의 근거를 찾을 수 없습니다.')

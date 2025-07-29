@@ -94,6 +94,14 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
     setCurrentStep('reading')
   }, [setCurrentStep])
 
+  // 퀴즈에서 틀린 문제의 근거를 옆 논문에서 표시하는 함수
+  const handleShowEvidenceInPaper = useCallback((contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => {
+    console.log('handleShowEvidenceInPaper 호출됨:', { contentId, highlightInfo })
+    setTargetContentId(contentId)
+    setTargetHighlightInfo(highlightInfo)
+    console.log('targetContentId와 targetHighlightInfo 설정 완료')
+  }, [])
+
   const getCurrentStepIndex = () => steps.findIndex(s => s.key === currentStep)
   const handleStepClick = (index: number) => setCurrentStep(steps[index].key)
 
@@ -171,6 +179,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   isPaperContentCollapsed={false}
                   onTogglePaperContent={() => {}}
                   onNavigateToReadingStep={handleNavigateToReadingStep}
+                  onShowEvidenceInPaper={handleShowEvidenceInPaper}
                 />
               </div>
               
@@ -180,6 +189,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   paperId={paperId}
                   topicId={topicId}
                   isCollapsed={false}
+                  targetContentId={targetContentId}
+                  targetHighlightInfo={targetHighlightInfo}
                 />
               </div>
             </div>
@@ -195,6 +206,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   paperId={paperId}
                   topicId={topicId}
                   isCollapsed={isCollapsed}
+                  targetContentId={targetContentId}
+                  targetHighlightInfo={targetHighlightInfo}
                 />
               </div>
 
@@ -210,6 +223,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   isPaperContentCollapsed={isCollapsed}
                   onTogglePaperContent={() => setIsCollapsed(!isCollapsed)}
                   onNavigateToReadingStep={handleNavigateToReadingStep}
+                  onShowEvidenceInPaper={handleShowEvidenceInPaper}
                 />
               </div>
             </div>

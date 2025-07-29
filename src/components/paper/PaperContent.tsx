@@ -106,6 +106,13 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
     }
   }, [targetContentId, contents])
 
+  // targetHighlightInfo가 있을 때 로그 출력
+  useEffect(() => {
+    if (targetHighlightInfo) {
+      console.log('PaperContent에서 targetHighlightInfo 받음:', targetHighlightInfo)
+    }
+  }, [targetHighlightInfo])
+
   const handleTranslate = useCallback(async () => {
     try {
       startTranslation(paperId, paperTitle || '논문', topicId)
