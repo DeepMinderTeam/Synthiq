@@ -1,3 +1,117 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 하이라이트 스타일 */
+.highlight {
+  transition: all 0.2s ease-in-out;
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: 0 1px;
+  display: inline;
+  position: relative;
+  cursor: pointer;
+}
+
+.highlight:hover {
+  filter: brightness(0.9);
+  transform: scale(1.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: currentColor;
+  opacity: 0.1;
+  border-radius: 3px;
+  z-index: -1;
+}
+
+/* 하이라이트 색상별 스타일 */
+.highlight.bg-yellow-200 {
+  background-color: rgba(254, 240, 138, 0.8);
+  color: #92400e;
+}
+
+.highlight.bg-green-200 {
+  background-color: rgba(187, 247, 208, 0.8);
+  color: #166534;
+}
+
+.highlight.bg-blue-200 {
+  background-color: rgba(191, 219, 254, 0.8);
+  color: #1e40af;
+}
+
+.highlight.bg-orange-200 {
+  background-color: rgba(254, 215, 170, 0.8);
+  color: #c2410c;
+}
+
+.highlight.bg-purple-200 {
+  background-color: rgba(233, 213, 255, 0.8);
+  color: #7c3aed;
+}
+
+.highlight.bg-pink-200 {
+  background-color: rgba(251, 207, 232, 0.8);
+  color: #be185d;
+}
+
+/* 하이라이트 컨테이너 */
+.highlight-container {
+  position: relative;
+  user-select: text;
+  line-height: 1.6;
+}
+
+.highlight-container::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+/* 하이라이트 컬러 피커 스타일 */
+.highlight-color-picker {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
+}
+
+/* 하이라이트 목록 스타일 */
+.highlight-list {
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.highlight-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.highlight-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.highlight-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.highlight-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

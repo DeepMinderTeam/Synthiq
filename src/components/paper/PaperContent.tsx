@@ -11,6 +11,8 @@ import ReactMarkdown from 'react-markdown'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabaseClient'
 import { useAIAnalysis } from '@/context/AIAnalysisContext'
+import { useHighlights } from '@/hooks/useHighlights'
+import Highlighter from '@/components/ui/Highlighter'
 import React from 'react'
 
 // PdfViewer를 동적으로 import하여 SSR 문제 해결
@@ -32,6 +34,12 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
   
   const { state, startTranslation, completeTranslation } = useAIAnalysis()
   const { isTranslating, messages } = state
+
+  // 하이라이트 기능
+  const { highlights, createHighlight, deleteHighlight, loading: highlightsLoading } = useHighlights({
+    paperId,
+    contentId: contents[currentPage]?.content_id?.toString()
+  })
 
   const fetchContents = useCallback(async () => {
     try {
@@ -261,7 +269,35 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
                       {contents[currentPage].content_text_eng ? (
                         <div className="text-gray-800 prose prose-sm max-w-none">
-                          <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                          <Highlighter
+                            contentId={contents[currentPage].content_id?.toString()}
+                            onHighlightChange={async (newHighlights) => {
+                              // 새로운 하이라이트가 추가되면 서버에 저장
+                              const lastHighlight = newHighlights[newHighlights.length - 1]
+                              if (lastHighlight && !highlights.find(h => h.highlight_id.toString() === lastHighlight.id)) {
+                                try {
+                                  await createHighlight({
+                                    contentId: contents[currentPage].content_id,
+                                    text: lastHighlight.text,
+                                    color: lastHighlight.color,
+                                    startOffset: lastHighlight.startOffset,
+                                    endOffset: lastHighlight.endOffset
+                                  })
+                                } catch (error) {
+                                  console.error('하이라이트 저장 오류:', error)
+                                }
+                              }
+                            }}
+                            initialHighlights={highlights.map(h => ({
+                              id: h.highlight_id.toString(),
+                              text: h.highlight_text,
+                              color: h.highlight_color,
+                              startOffset: h.highlight_start_offset,
+                              endOffset: h.highlight_end_offset
+                            }))}
+                          >
+                            <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                          </Highlighter>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-full">
