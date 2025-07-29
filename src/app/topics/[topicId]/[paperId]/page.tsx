@@ -2,8 +2,9 @@
 
 import { usePaperStore, type LearningStep } from '@/hooks/paperStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useRecentViews } from '@/hooks/useRecentViews'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { CheckIcon } from '@heroicons/react/24/solid'
 import { PaperContent, StepContent, ReadingStep, TopBar } from '@/components'
 import Sidebar from '@/components/layout/Sidebar'
@@ -15,6 +16,7 @@ const steps: { key: LearningStep; label: string }[] = [
   { key: 'reading', label: '논문 읽기' },
   { key: 'summary', label: '논문 요약' },
   { key: 'quiz', label: '논문 퀴즈' },
+  { key: 'wrong_answer', label: '오답노트' },
   { key: 'stats', label: '논문 통계' }
 ]
 
@@ -79,11 +81,36 @@ interface PaperLearningPageProps {
 export default function PaperLearningPage({ params }: PaperLearningPageProps) {
   const { currentStep, setCurrentStep } = usePaperStore()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [targetContentId, setTargetContentId] = useState<number | undefined>(undefined)
+  const [targetHighlightInfo, setTargetHighlightInfo] = useState<{ evidence: string; startIndex: number; endIndex: number } | undefined>(undefined)
 
   const { user } = useAuth()
+  const { updateRecentView } = useRecentViews()
   const router = useRouter()
 
   const { paperId, topicId } = params
+
+  // 논문 페이지에 접근할 때 최근 본 기록 업데이트
+  useEffect(() => {
+    if (user?.id && paperId) {
+      updateRecentView('paper', parseInt(paperId))
+    }
+  }, [user?.id, paperId, updateRecentView])
+
+  // 퀴즈에서 틀린 문제의 근거로 이동하는 함수
+  const handleNavigateToReadingStep = useCallback((contentId?: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => {
+    setTargetContentId(contentId)
+    setTargetHighlightInfo(highlightInfo)
+    setCurrentStep('reading')
+  }, [setCurrentStep])
+
+  // 퀴즈에서 틀린 문제의 근거를 옆 논문에서 표시하는 함수
+  const handleShowEvidenceInPaper = useCallback((contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => {
+    console.log('handleShowEvidenceInPaper 호출됨:', { contentId, highlightInfo })
+    setTargetContentId(contentId)
+    setTargetHighlightInfo(highlightInfo)
+    console.log('targetContentId와 targetHighlightInfo 설정 완료')
+  }, [])
 
   const getCurrentStepIndex = () => steps.findIndex(s => s.key === currentStep)
   const handleStepClick = (index: number) => setCurrentStep(steps[index].key)
@@ -147,7 +174,7 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
             <div className="p-4 sm:p-8">
         {currentStep === 'reading' ? (
             <div className="w-full h-full">
-            <ReadingStep paperId={paperId} topicId={topicId} />
+            <ReadingStep paperId={paperId} topicId={topicId} targetContentId={targetContentId} targetHighlightInfo={targetHighlightInfo} />
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row w-full h-full transition-all duration-500 gap-4">
@@ -161,6 +188,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   topicId={topicId}
                   isPaperContentCollapsed={false}
                   onTogglePaperContent={() => {}}
+                  onNavigateToReadingStep={handleNavigateToReadingStep}
+                  onShowEvidenceInPaper={handleShowEvidenceInPaper}
                 />
               </div>
               
@@ -170,6 +199,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   paperId={paperId}
                   topicId={topicId}
                   isCollapsed={false}
+                  targetContentId={targetContentId}
+                  targetHighlightInfo={targetHighlightInfo}
                 />
               </div>
             </div>
@@ -185,6 +216,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   paperId={paperId}
                   topicId={topicId}
                   isCollapsed={isCollapsed}
+                  targetContentId={targetContentId}
+                  targetHighlightInfo={targetHighlightInfo}
                 />
               </div>
 
@@ -199,6 +232,8 @@ export default function PaperLearningPage({ params }: PaperLearningPageProps) {
                   topicId={topicId}
                   isPaperContentCollapsed={isCollapsed}
                   onTogglePaperContent={() => setIsCollapsed(!isCollapsed)}
+                  onNavigateToReadingStep={handleNavigateToReadingStep}
+                  onShowEvidenceInPaper={handleShowEvidenceInPaper}
                 />
               </div>
             </div>

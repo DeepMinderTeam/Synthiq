@@ -231,3 +231,327 @@ const { data: quizzes } = await supabase
   .select('*')
   .eq('quiz_category', '개념 이해');
 ``` 
+
+# Supabase 설정 가이드
+
+## 데이터베이스 테이블 생성
+
+### 1. 사용자 테이블 (users)
+```sql
+CREATE TABLE users (
+  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_email VARCHAR(255) UNIQUE NOT NULL,
+  user_name VARCHAR(100),
+  user_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  user_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 2. 주제 테이블 (topics)
+```sql
+CREATE TABLE topics (
+  topic_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  topic_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  topic_title VARCHAR(255) NOT NULL,
+  topic_description TEXT,
+  topic_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  topic_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 3. 논문 테이블 (paper)
+```sql
+CREATE TABLE paper (
+  paper_id SERIAL PRIMARY KEY,
+  paper_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  paper_topic_id UUID REFERENCES topics(topic_id) ON DELETE CASCADE,
+  paper_title VARCHAR(500) NOT NULL,
+  paper_abstract TEXT,
+  paper_url TEXT,
+  paper_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  paper_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 4. 논문 내용 테이블 (paper_contents)
+```sql
+CREATE TABLE paper_contents (
+  content_id SERIAL PRIMARY KEY,
+  content_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  content_type VARCHAR(100),
+  content_index INTEGER NOT NULL,
+  content_text TEXT NOT NULL,
+  content_text_eng TEXT,
+  content_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  content_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 5. 논문 하이라이트 테이블 (paper_highlights)
+```sql
+CREATE TABLE paper_highlights (
+  highlight_id SERIAL PRIMARY KEY,
+  highlight_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  highlight_content_id INTEGER REFERENCES paper_contents(content_id) ON DELETE CASCADE,
+  highlight_page_id VARCHAR(100),
+  highlight_text TEXT NOT NULL,
+  highlight_color VARCHAR(50) NOT NULL,
+  highlight_start_offset INTEGER NOT NULL,
+  highlight_end_offset INTEGER NOT NULL,
+  highlight_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  highlight_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  highlight_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 6. 논문 요약 테이블 (paper_summaries)
+```sql
+CREATE TABLE paper_summaries (
+  summary_id SERIAL PRIMARY KEY,
+  summary_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  summary_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  summary_type VARCHAR(50) NOT NULL, -- 'ai' or 'self'
+  summary_content TEXT NOT NULL,
+  summary_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  summary_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 7. 논문 퀴즈 테이블 (paper_quizzes)
+```sql
+CREATE TABLE paper_quizzes (
+  quiz_id SERIAL PRIMARY KEY,
+  quiz_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  quiz_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  quiz_title VARCHAR(255),
+  quiz_description TEXT,
+  quiz_options JSONB, -- 퀴즈 생성 옵션 저장
+  quiz_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  quiz_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 8. 퀴즈 문제 테이블 (paper_test_items)
+```sql
+CREATE TABLE paper_test_items (
+  test_item_id SERIAL PRIMARY KEY,
+  test_item_quiz_id INTEGER REFERENCES paper_quizzes(quiz_id) ON DELETE CASCADE,
+  test_item_question TEXT NOT NULL,
+  test_item_type VARCHAR(50) NOT NULL, -- 'multiple_choice', 'ox_quiz', 'short_answer', 'essay'
+  test_item_options JSONB, -- 객관식 보기들
+  test_item_answer TEXT NOT NULL,
+  test_item_explanation TEXT,
+  test_item_difficulty VARCHAR(20), -- 'easy', 'medium', 'hard'
+  test_item_category VARCHAR(100),
+  test_item_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 9. 퀴즈 시도 테이블 (test_attempts)
+```sql
+CREATE TABLE test_attempts (
+  attempt_id SERIAL PRIMARY KEY,
+  attempt_quiz_id INTEGER REFERENCES paper_quizzes(quiz_id) ON DELETE CASCADE,
+  attempt_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  attempt_started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  attempt_completed_at TIMESTAMP WITH TIME ZONE,
+  attempt_score INTEGER,
+  attempt_total_questions INTEGER,
+  attempt_correct_answers INTEGER
+);
+```
+
+### 10. 퀴즈 답안 테이블 (test_attempt_items)
+```sql
+CREATE TABLE test_attempt_items (
+  attempt_item_id SERIAL PRIMARY KEY,
+  attempt_item_attempt_id INTEGER REFERENCES test_attempts(attempt_id) ON DELETE CASCADE,
+  attempt_item_test_item_id INTEGER REFERENCES paper_test_items(test_item_id) ON DELETE CASCADE,
+  attempt_item_user_answer TEXT,
+  attempt_item_is_correct BOOLEAN,
+  attempt_item_points INTEGER,
+  attempt_item_answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- AI 근거 찾기 관련 컬럼 추가
+  attempt_item_evidence TEXT, -- AI가 찾은 근거 텍스트
+  attempt_item_evidence_content_id INTEGER, -- 근거가 있는 content_id
+  attempt_item_evidence_start_index INTEGER, -- 근거 텍스트 시작 위치
+  attempt_item_evidence_end_index INTEGER -- 근거 텍스트 끝 위치
+);
+```
+
+### 11. 최근 조회 테이블 (paper_recent_views)
+```sql
+CREATE TABLE paper_recent_views (
+  view_id SERIAL PRIMARY KEY,
+  view_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  view_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  view_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 12. 주제 최근 조회 테이블 (topic_recent_views)
+```sql
+CREATE TABLE topic_recent_views (
+  view_id SERIAL PRIMARY KEY,
+  view_topic_id UUID REFERENCES topics(topic_id) ON DELETE CASCADE,
+  view_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  view_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 13. 오답노트 테이블들
+```sql
+-- 오답노트 메인 테이블 (test_attempt_items 외래키로 연결)
+CREATE TABLE wrong_answer_notes (
+  note_id SERIAL PRIMARY KEY,
+  note_user_id UUID REFERENCES user(user_id) ON DELETE CASCADE,
+  note_attempt_item_id INTEGER REFERENCES test_attempt_items(attempt_item_id) ON DELETE CASCADE,
+  note_mistake_count INTEGER DEFAULT 1, -- 틀린 횟수
+  note_last_wrong_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(), -- 마지막으로 틀린 날짜
+  note_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  note_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(note_user_id, note_attempt_item_id) -- 사용자당 시도 아이템당 하나의 오답노트만 허용
+);
+
+-- 오답노트 학습 기록 테이블
+CREATE TABLE wrong_answer_study_sessions (
+  session_id SERIAL PRIMARY KEY,
+  session_note_id INTEGER REFERENCES wrong_answer_notes(note_id) ON DELETE CASCADE,
+  session_user_id UUID REFERENCES user(user_id) ON DELETE CASCADE,
+  session_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  session_result BOOLEAN NOT NULL, -- 학습 결과 (true: 맞음, false: 틀림)
+  session_answer TEXT, -- 사용자가 입력한 답
+  session_feedback TEXT -- AI 피드백
+);
+```
+
+### 14. 즐겨찾기 테이블들
+```sql
+-- 논문 즐겨찾기
+CREATE TABLE paper_favorites (
+  favorite_id SERIAL PRIMARY KEY,
+  favorite_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  favorite_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  favorite_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(favorite_paper_id, favorite_user_id)
+);
+
+-- 주제 즐겨찾기
+CREATE TABLE topic_favorites (
+  favorite_id SERIAL PRIMARY KEY,
+  favorite_topic_id UUID REFERENCES topics(topic_id) ON DELETE CASCADE,
+  favorite_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  favorite_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(favorite_topic_id, favorite_user_id)
+);
+```
+
+## 인덱스 생성
+
+```sql
+-- 성능 최적화를 위한 인덱스
+CREATE INDEX idx_paper_user_id ON paper(paper_user_id);
+CREATE INDEX idx_paper_topic_id ON paper(paper_topic_id);
+CREATE INDEX idx_paper_contents_paper_id ON paper_contents(content_paper_id);
+CREATE INDEX idx_paper_highlights_paper_id ON paper_highlights(highlight_paper_id);
+CREATE INDEX idx_paper_highlights_content_id ON paper_highlights(highlight_content_id);
+CREATE INDEX idx_paper_highlights_user_id ON paper_highlights(highlight_user_id);
+CREATE INDEX idx_paper_summaries_paper_id ON paper_summaries(summary_paper_id);
+CREATE INDEX idx_paper_quizzes_paper_id ON paper_quizzes(quiz_paper_id);
+CREATE INDEX idx_paper_test_items_quiz_id ON paper_test_items(test_item_quiz_id);
+CREATE INDEX idx_test_attempts_quiz_id ON test_attempts(attempt_quiz_id);
+CREATE INDEX idx_test_attempt_items_attempt_id ON test_attempt_items(attempt_item_attempt_id);
+CREATE INDEX idx_paper_recent_views_user_id ON paper_recent_views(view_user_id);
+CREATE INDEX idx_topic_recent_views_user_id ON topic_recent_views(view_user_id);
+CREATE INDEX idx_wrong_answer_notes_user_id ON wrong_answer_notes(note_user_id);
+CREATE INDEX idx_wrong_answer_notes_attempt_item_id ON wrong_answer_notes(note_attempt_item_id);
+CREATE INDEX idx_wrong_answer_notes_user_attempt ON wrong_answer_notes(note_user_id, note_attempt_item_id);
+CREATE INDEX idx_wrong_answer_study_sessions_note_id ON wrong_answer_study_sessions(session_note_id);
+CREATE INDEX idx_wrong_answer_study_sessions_user_id ON wrong_answer_study_sessions(session_user_id);
+```
+
+## RLS (Row Level Security) 정책
+
+```sql
+-- 모든 테이블에 RLS 활성화
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE topics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_contents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_highlights ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_summaries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_quizzes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_test_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE test_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE test_attempt_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_recent_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE topic_recent_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paper_favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE topic_favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wrong_answer_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wrong_answer_study_sessions ENABLE ROW LEVEL SECURITY;
+
+-- 사용자 테이블 정책
+CREATE POLICY "Users can view own profile" ON users
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own profile" ON users
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- 주제 테이블 정책
+CREATE POLICY "Users can view own topics" ON topics
+  FOR ALL USING (auth.uid() = topic_user_id);
+
+-- 논문 테이블 정책
+CREATE POLICY "Users can view own papers" ON paper
+  FOR ALL USING (auth.uid() = paper_user_id);
+
+-- 논문 내용 테이블 정책
+CREATE POLICY "Users can view paper contents" ON paper_contents
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM paper 
+      WHERE paper.paper_id = paper_contents.content_paper_id 
+      AND paper.paper_user_id = auth.uid()
+    )
+  );
+
+-- 논문 하이라이트 테이블 정책
+CREATE POLICY "Users can manage own highlights" ON paper_highlights
+  FOR ALL USING (auth.uid() = highlight_user_id);
+
+-- 오답노트 테이블 정책
+CREATE POLICY "Users can manage own wrong answer notes" ON wrong_answer_notes
+  FOR ALL USING (auth.uid() = note_user_id);
+
+CREATE POLICY "Users can manage own study sessions" ON wrong_answer_study_sessions
+  FOR ALL USING (auth.uid() = session_user_id);
+
+-- 나머지 테이블들도 유사한 정책 적용...
+```
+
+## Storage 버킷 설정
+
+```sql
+-- 논문 PDF 파일을 저장할 버킷 생성
+INSERT INTO storage.buckets (id, name, public) VALUES ('papers', 'papers', false);
+
+-- Storage 정책 설정
+CREATE POLICY "Users can upload own papers" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'papers' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Users can view own papers" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'papers' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Users can delete own papers" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'papers' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+``` 

@@ -6,12 +6,14 @@ import PaperContent from '@/components/paper/PaperContent'
 interface ReadingStepProps {
   paperId: string
   topicId: string
+  targetContentId?: number
+  targetHighlightInfo?: { evidence: string; startIndex: number; endIndex: number }
 }
 
-export default function ReadingStep({ paperId, topicId }: ReadingStepProps) {
+export default function ReadingStep({ paperId, topicId, targetContentId, targetHighlightInfo }: ReadingStepProps) {
   return (
     <div className="h-full">
-      <PaperContent paperId={paperId} topicId={topicId} />
+      <PaperContent paperId={paperId} topicId={topicId} targetContentId={targetContentId} targetHighlightInfo={targetHighlightInfo} />
     </div>
   )
 } 
