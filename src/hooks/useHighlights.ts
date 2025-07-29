@@ -4,11 +4,9 @@ import { supabase } from '@/lib/supabaseClient'
 
 interface UseHighlightsProps {
   paperId: string
-  contentId?: string
-  pageId?: string
 }
 
-export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps) {
+export function useHighlights({ paperId }: UseHighlightsProps) {
   const [highlights, setHighlights] = useState<PaperHighlight[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,8 +20,6 @@ export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps
 
     try {
       const params = new URLSearchParams({ paperId })
-      if (contentId) params.append('contentId', contentId)
-      if (pageId) params.append('pageId', pageId)
 
       const response = await fetch(`/api/highlights?${params}`)
       const data = await response.json()
@@ -39,7 +35,7 @@ export function useHighlights({ paperId, contentId, pageId }: UseHighlightsProps
     } finally {
       setLoading(false)
     }
-  }, [paperId, contentId, pageId])
+  }, [paperId])
 
   // 하이라이트 생성
   const createHighlight = useCallback(async (highlightData: Omit<CreateHighlightRequest, 'paperId'>) => {

@@ -37,8 +37,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
 
   // 하이라이트 기능
   const { highlights, createHighlight, deleteHighlight, loading: highlightsLoading, error: highlightsError } = useHighlights({
-    paperId,
-    contentId: contents[currentPage]?.content_id?.toString()
+    paperId
   })
 
   const fetchContents = useCallback(async () => {
@@ -119,6 +118,8 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
       setCurrentPage(currentPage + 1)
     }
   }
+
+
 
   const handleTabChange = (tab: 'original' | 'translation') => {
     setActiveTab(tab)
@@ -276,79 +277,87 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                   </button>
                 </div>
                 
-                {/* 현재 페이지 내용 */}
+                {/* 모든 페이지 내용을 하나의 Highlighter로 관리 */}
                 <div className="flex-1 overflow-y-auto">
-                  <div className="space-y-4">
-                    {contents[currentPage].content_type && (
-                      <div className="text-sm font-medium text-blue-800 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs">📋</span>
-                          </div>
-                          <span>{contents[currentPage].content_type}</span>
-                        </div>
-                      </div>
-                    )}
-                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
-                      {contents[currentPage].content_text_eng ? (
-                        <div className="text-gray-800 prose prose-sm max-w-none">
-                          <Highlighter
-                            contentId={contents[currentPage].content_id?.toString()}
-                            initialHighlights={highlights}
-                            onDeleteHighlight={async (highlightId) => {
-                              // 하이라이트 ID를 숫자로 변환하여 deleteHighlight 호출
-                              const numericId = typeof highlightId === 'string' ? parseInt(highlightId) : highlightId
-                              if (!isNaN(numericId)) {
-                                await deleteHighlight(numericId)
-                              }
-                            }}
-                            onHighlightChange={async (newHighlights) => {
-                              console.log('하이라이트 저장 요청:', newHighlights)
-                              
-                              // 모든 새로운 하이라이트를 서버에 저장
-                              for (const highlight of newHighlights) {
-                                if (!highlights.find(h => h.highlight_id.toString() === highlight.id)) {
-                                  console.log('하이라이트 저장 시도:', highlight)
-                                  try {
-                                    const result = await createHighlight({
-                                      contentId: contents[currentPage].content_id,
-                                      text: highlight.text,
-                                      color: highlight.color,
-                                      startOffset: highlight.startOffset,
-                                      endOffset: highlight.endOffset
-                                    })
-                                    console.log('하이라이트 저장 성공:', result)
-                                  } catch (error) {
-                                    console.error('하이라이트 저장 오류:', error)
-                                    alert('하이라이트 저장에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
-                                  }
-                                }
-                              }
-                            }}
-                            initialHighlights={highlights.map(h => ({
-                              id: h.highlight_id.toString(),
-                              text: h.highlight_text,
-                              color: h.highlight_color,
-                              startOffset: h.highlight_start_offset,
-                              endOffset: h.highlight_end_offset
-                            }))}
-                          >
-                            <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
-                          </Highlighter>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                              <span className="text-gray-500 text-2xl">🌐</span>
+                  <Highlighter
+                    key={`highlighter-${currentPage}`}
+                    currentContentId={contents[currentPage].content_id?.toString()}
+                    initialHighlights={highlights.map(h => ({
+                      id: h.highlight_id.toString(),
+                      text: h.highlight_text,
+                      color: h.highlight_color,
+                      startOffset: h.highlight_start_offset,
+                      endOffset: h.highlight_end_offset,
+                      contentId: h.highlight_content_id?.toString()
+                    }))}
+                    onNavigateToPage={(contentId) => {
+                      // 해당 contentId의 페이지로 이동
+                      const targetPageIndex = contents.findIndex(content => content.content_id === parseInt(contentId))
+                      if (targetPageIndex !== -1) {
+                        setCurrentPage(targetPageIndex)
+                      }
+                    }}
+                    onDeleteHighlight={async (highlightId) => {
+                      // 하이라이트 ID를 숫자로 변환하여 deleteHighlight 호출
+                      const numericId = typeof highlightId === 'string' ? parseInt(highlightId) : highlightId
+                      if (!isNaN(numericId)) {
+                        await deleteHighlight(numericId)
+                      }
+                    }}
+                    onHighlightChange={async (newHighlights) => {
+                      console.log('하이라이트 저장 요청:', newHighlights)
+                      
+                      // 모든 새로운 하이라이트를 서버에 저장
+                      for (const highlight of newHighlights) {
+                        if (!highlights.find(h => h.highlight_id.toString() === highlight.id)) {
+                          console.log('하이라이트 저장 시도:', highlight)
+                          try {
+                            const result = await createHighlight({
+                              contentId: contents[currentPage].content_id,
+                              text: highlight.text,
+                              color: highlight.color,
+                              startOffset: highlight.startOffset,
+                              endOffset: highlight.endOffset
+                            })
+                            console.log('하이라이트 저장 성공:', result)
+                          } catch (error) {
+                            console.error('하이라이트 저장 오류:', error)
+                            alert('하이라이트 저장에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    <div className="space-y-4">
+                      {contents[currentPage].content_type && (
+                        <div className="text-sm font-medium text-blue-800 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs">📋</span>
                             </div>
-                            <div className="text-gray-500 font-medium">번역이 없습니다</div>
-                            <div className="text-gray-400 text-sm mt-1">번역하기 버튼을 눌러주세요</div>
+                            <span>{contents[currentPage].content_type}</span>
                           </div>
                         </div>
                       )}
+                      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
+                        {contents[currentPage].content_text_eng ? (
+                          <div className="text-gray-800 prose prose-sm max-w-none">
+                            <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="text-center">
+                              <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-gray-500 text-2xl">🌐</span>
+                              </div>
+                              <div className="text-gray-500 font-medium">번역이 없습니다</div>
+                              <div className="text-gray-400 text-sm mt-1">번역하기 버튼을 눌러주세요</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Highlighter>
                 </div>
               </>
             ) : (

@@ -8,17 +8,16 @@ interface Highlight {
   color: string
   startOffset: number
   endOffset: number
-  pageId?: string
   contentId?: string
 }
 
 interface HighlighterProps {
   children: React.ReactNode
-  contentId?: string
-  pageId?: string
   onHighlightChange?: (highlights: Highlight[]) => void
   onDeleteHighlight?: (highlightId: string) => Promise<void>
+  onNavigateToPage?: (contentId: string) => void
   initialHighlights?: Highlight[]
+  currentContentId?: string
   className?: string
 }
 
@@ -33,11 +32,11 @@ const HIGHLIGHT_COLORS = [
 
 export default function Highlighter({
   children,
-  contentId,
-  pageId,
   onHighlightChange,
   onDeleteHighlight,
+  onNavigateToPage,
   initialHighlights = [],
+  currentContentId,
   className = ''
 }: HighlighterProps) {
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights)
@@ -46,23 +45,29 @@ export default function Highlighter({
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [selectedColor, setSelectedColor] = useState(HIGHLIGHT_COLORS[0])
   const [highlightPosition, setHighlightPosition] = useState({ x: 0, y: 0 })
+  const [showHighlightPanel, setShowHighlightPanel] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // initialHighlights가 변경될 때 highlights 상태 업데이트 및 DOM에 렌더링
+  // initialHighlights나 currentContentId가 변경될 때 하이라이트 다시 렌더링
   useEffect(() => {
-    console.log('initialHighlights 변경됨:', initialHighlights)
+    console.log('initialHighlights 또는 currentContentId 변경됨:', { initialHighlights, currentContentId })
     setHighlights(initialHighlights)
     
-    // 기존 하이라이트를 DOM에 렌더링
+    // 기존 하이라이트를 DOM에 렌더링 (현재 페이지의 하이라이트만)
     if (initialHighlights.length > 0 && containerRef.current) {
       // DOM이 완전히 렌더링된 후 하이라이트 적용
       const timer = setTimeout(() => {
-        renderExistingHighlights(initialHighlights)
-      }, 100)
+        // 현재 페이지의 하이라이트만 렌더링 (contentId가 없거나 현재 페이지의 contentId와 일치하는 것)
+        const currentPageHighlights = initialHighlights.filter(highlight => 
+          !highlight.contentId || highlight.contentId === currentContentId
+        )
+        console.log('현재 페이지 하이라이트 렌더링:', currentPageHighlights)
+        renderExistingHighlights(currentPageHighlights)
+      }, 300) // 시간을 더 늘려서 DOM 렌더링 완료 대기
       
       return () => clearTimeout(timer)
     }
-  }, [initialHighlights])
+  }, [initialHighlights, currentContentId])
 
   // 텍스트 노드를 찾는 헬퍼 함수
   const getTextNodes = useCallback((node: Node): Text[] => {
@@ -91,53 +96,72 @@ export default function Highlighter({
     return textNodes
   }, [])
 
+          // 기존 하이라이트를 DOM에서 제거하는 함수
+  const clearExistingHighlights = useCallback(() => {
+    if (!containerRef.current) return
+
+    const container = containerRef.current
+    const existingHighlights = container.querySelectorAll('.highlight')
+    
+    existingHighlights.forEach(highlightElement => {
+      const parent = highlightElement.parentNode
+      if (parent) {
+        const textNode = document.createTextNode(highlightElement.textContent || '')
+        parent.replaceChild(textNode, highlightElement)
+      }
+    })
+  }, [])
+
   // 기존 하이라이트를 DOM에 렌더링하는 함수
   const renderExistingHighlights = useCallback((highlightsToRender: Highlight[]) => {
     if (!containerRef.current) return
 
-    const container = containerRef.current
-    const textNodes = getTextNodes(container)
-    
-    highlightsToRender.forEach(highlight => {
-      // 이미 렌더링된 하이라이트는 건너뛰기
-      if (container.querySelector(`[data-highlight-id="${highlight.id}"]`)) {
-        return
-      }
+    // 먼저 기존 하이라이트를 모두 제거
+    clearExistingHighlights()
 
-      // 텍스트 노드에서 하이라이트 텍스트 찾기
-      for (const textNode of textNodes) {
-        const text = textNode.textContent || ''
-        const index = text.indexOf(highlight.text)
-        
-        if (index !== -1) {
-          // 텍스트를 분할하여 하이라이트 적용
-          const beforeText = text.substring(0, index)
-          const afterText = text.substring(index + highlight.text.length)
+    // 하이라이트 제거 후 잠시 대기 후 텍스트 노드 다시 찾기
+    setTimeout(() => {
+      const container = containerRef.current
+      if (!container) return
+      
+      const textNodes = getTextNodes(container)
+      
+      highlightsToRender.forEach(highlight => {
+        // 텍스트 노드에서 하이라이트 텍스트 찾기
+        for (const textNode of textNodes) {
+          const text = textNode.textContent || ''
+          const index = text.indexOf(highlight.text)
           
-          const span = document.createElement('span')
-          span.className = `highlight ${highlight.color} cursor-pointer`
-          span.setAttribute('data-highlight-id', highlight.id)
-          span.textContent = highlight.text
-          
-          const parent = textNode.parentNode
-          if (parent) {
-            const fragment = document.createDocumentFragment()
+          if (index !== -1) {
+            // 텍스트를 분할하여 하이라이트 적용
+            const beforeText = text.substring(0, index)
+            const afterText = text.substring(index + highlight.text.length)
             
-            if (beforeText) {
-              fragment.appendChild(document.createTextNode(beforeText))
-            }
-            fragment.appendChild(span)
-            if (afterText) {
-              fragment.appendChild(document.createTextNode(afterText))
-            }
+            const span = document.createElement('span')
+            span.className = `highlight ${highlight.color} cursor-pointer`
+            span.setAttribute('data-highlight-id', highlight.id.toString())
+            span.textContent = highlight.text
             
-            parent.replaceChild(fragment, textNode)
-            break
+            const parent = textNode.parentNode
+            if (parent) {
+              const fragment = document.createDocumentFragment()
+              
+              if (beforeText) {
+                fragment.appendChild(document.createTextNode(beforeText))
+              }
+              fragment.appendChild(span)
+              if (afterText) {
+                fragment.appendChild(document.createTextNode(afterText))
+              }
+              
+              parent.replaceChild(fragment, textNode)
+              break
+            }
           }
         }
-      }
-    })
-  }, [])
+      })
+    }, 50)
+  }, [clearExistingHighlights])
 
   // 하이라이트 변경 시 콜백 호출 (자동 저장 비활성화)
   // useEffect(() => {
@@ -211,9 +235,7 @@ export default function Highlighter({
       text,
       color,
       startOffset,
-      endOffset,
-      pageId,
-      contentId
+      endOffset
     }
 
     // 선택된 텍스트를 하이라이트로 감싸기
@@ -237,7 +259,7 @@ export default function Highlighter({
     
     // 선택 해제
     selection.removeAllRanges()
-  }, [pageId, contentId])
+  }, [])
 
   // 하이라이트 제거
   const removeHighlight = useCallback(async (highlightId: string | number) => {
@@ -323,47 +345,93 @@ export default function Highlighter({
         </div>
       )}
 
+            {/* 하이라이트 목록 버튼 */}
+      {highlights.length > 0 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowHighlightPanel(!showHighlightPanel)}
+            className="inline-flex items-center px-3 py-2 text-sm bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-all duration-200 shadow-sm border border-blue-200"
+            title="하이라이트 목록 보기"
+          >
+            <span className="mr-2">📝</span>
+            하이라이트 목록 ({highlights.length}개)
+          </button>
+        </div>
+      )}
+
+      {/* 하이라이트 사이드 패널 */}
+      {showHighlightPanel && highlights.length > 0 && (
+        <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-xl border-l border-gray-200 z-50 transform transition-transform duration-300 ease-in-out">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+            <h3 className="text-lg font-semibold text-gray-800">하이라이트 목록</h3>
+            <button
+              onClick={() => setShowHighlightPanel(false)}
+              className="text-gray-600 hover:text-gray-800 text-xl p-1 rounded hover:bg-gray-100"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="p-4 h-full overflow-y-auto">
+            <div className="space-y-2">
+              {highlights.map((highlight) => (
+                <div key={highlight.id} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center mb-1">
+                        <span className={`inline-block w-3 h-3 rounded mr-2 ${highlight.color}`}></span>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        {highlight.text.length > 80 ? highlight.text.substring(0, 80) + '...' : highlight.text}
+                      </p>
+                    </div>
+                    <button
+                                          onClick={() => {
+                      if (confirm('이 하이라이트를 제거하시겠습니까?')) {
+                        removeHighlight(highlight.id.toString())
+                      }
+                    }}
+                      className="text-red-500 hover:text-red-700 ml-2 p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"
+                      title="하이라이트 제거"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // 현재 페이지에 있는 하이라이트인지 확인
+                      const highlightElement = containerRef.current?.querySelector(`[data-highlight-id="${highlight.id.toString()}"]`)
+                      if (highlightElement) {
+                        // 현재 페이지에 있으면 스크롤
+                        highlightElement.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'center' 
+                        })
+                        // 하이라이트 요소에 잠깐 포커스 효과 추가
+                        highlightElement.classList.add('ring-2', 'ring-yellow-400', 'ring-opacity-75')
+                        setTimeout(() => {
+                          highlightElement.classList.remove('ring-2', 'ring-yellow-400', 'ring-opacity-75')
+                        }, 2000)
+                      } else if (highlight.contentId && onNavigateToPage) {
+                        // 다른 페이지에 있으면 해당 페이지로 이동
+                        onNavigateToPage(highlight.contentId)
+                      }
+                    }}
+                    className="mt-2 w-full px-2 py-1 text-xs bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 rounded hover:from-blue-100 hover:to-purple-100 transition-all duration-200 border border-blue-200"
+                  >
+                    📍 위치로 이동
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 하이라이트된 텍스트 */}
       <div className="highlight-container">
         {children}
       </div>
-
-      {/* 하이라이트 목록 (개발용) */}
-      {highlights.length > 0 && (
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
-            <span>하이라이트 목록 ({highlights.length}개)</span>
-            <button
-              onClick={saveHighlights}
-              className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
-              title="하이라이트 저장"
-            >
-              💾 저장
-            </button>
-          </div>
-          <div className="space-y-1 highlight-list">
-            {highlights.map((highlight) => (
-              <div key={highlight.id} className="flex items-center justify-between text-xs p-2 hover:bg-gray-100 rounded transition-colors">
-                <span className="truncate flex-1">
-                  <span className={`inline-block w-3 h-3 rounded mr-2 ${highlight.color}`}></span>
-                  {highlight.text.substring(0, 50)}...
-                </span>
-                <button
-                  onClick={() => {
-                    if (confirm('이 하이라이트를 제거하시겠습니까?')) {
-                      removeHighlight(highlight.id)
-                    }
-                  }}
-                  className="text-red-500 hover:text-red-700 ml-2 p-1 rounded hover:bg-red-50 transition-colors"
-                  title="하이라이트 제거"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 } 
