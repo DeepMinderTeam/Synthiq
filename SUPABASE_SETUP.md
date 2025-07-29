@@ -370,7 +370,12 @@ CREATE TABLE test_attempt_items (
   attempt_item_user_answer TEXT,
   attempt_item_is_correct BOOLEAN,
   attempt_item_points INTEGER,
-  attempt_item_answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  attempt_item_answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- AI 근거 찾기 관련 컬럼 추가
+  attempt_item_evidence TEXT, -- AI가 찾은 근거 텍스트
+  attempt_item_evidence_content_id INTEGER, -- 근거가 있는 content_id
+  attempt_item_evidence_start_index INTEGER, -- 근거 텍스트 시작 위치
+  attempt_item_evidence_end_index INTEGER -- 근거 텍스트 끝 위치
 );
 ```
 

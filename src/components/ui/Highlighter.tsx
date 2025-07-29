@@ -18,6 +18,7 @@ interface HighlighterProps {
   onNavigateToPage?: (contentId: string) => void
   initialHighlights?: Highlight[]
   currentContentId?: string
+  targetHighlightInfo?: { evidence: string; startIndex: number; endIndex: number }
   className?: string
 }
 
@@ -37,6 +38,7 @@ export default function Highlighter({
   onNavigateToPage,
   initialHighlights = [],
   currentContentId,
+  targetHighlightInfo,
   className = ''
 }: HighlighterProps) {
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights)
@@ -95,6 +97,86 @@ export default function Highlighter({
     
     return textNodes
   }, [])
+
+  // targetHighlightInfo가 있을 때 해당 텍스트를 자동으로 하이라이트
+  useEffect(() => {
+    if (targetHighlightInfo && targetHighlightInfo.evidence && containerRef.current) {
+      console.log('타겟 하이라이트 정보:', targetHighlightInfo)
+      
+      const timer = setTimeout(() => {
+        // 텍스트에서 근거 찾기
+        const container = containerRef.current
+        if (!container) return
+        
+        const textNodes = getTextNodes(container)
+        let found = false
+        
+        for (const textNode of textNodes) {
+          const text = textNode.textContent || ''
+          const index = text.indexOf(targetHighlightInfo.evidence)
+          
+          if (index !== -1) {
+            // 근거 텍스트를 하이라이트로 감싸기
+            const beforeText = text.substring(0, index)
+            const afterText = text.substring(index + targetHighlightInfo.evidence.length)
+            
+            const span = document.createElement('span')
+            span.className = 'highlight bg-red-200 cursor-pointer'
+            span.setAttribute('data-highlight-id', `evidence-${Date.now()}`)
+            span.textContent = targetHighlightInfo.evidence
+            
+            // 우클릭 이벤트 추가
+            span.addEventListener('contextmenu', (e) => {
+              e.preventDefault()
+              if (confirm('이 하이라이트를 제거하시겠습니까?')) {
+                const parent = span.parentNode
+                if (parent) {
+                  const textNode = document.createTextNode(span.textContent || '')
+                  parent.replaceChild(textNode, span)
+                }
+              }
+            })
+            
+            const parent = textNode.parentNode
+            if (parent) {
+              const fragment = document.createDocumentFragment()
+              
+              if (beforeText) {
+                fragment.appendChild(document.createTextNode(beforeText))
+              }
+              fragment.appendChild(span)
+              if (afterText) {
+                fragment.appendChild(document.createTextNode(afterText))
+              }
+              
+              parent.replaceChild(fragment, textNode)
+              found = true
+              
+              // 하이라이트된 요소로 스크롤
+              span.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+              })
+              
+              // 하이라이트 효과 추가
+              span.classList.add('ring-2', 'ring-red-400', 'ring-opacity-75')
+              setTimeout(() => {
+                span.classList.remove('ring-2', 'ring-red-400', 'ring-opacity-75')
+              }, 3000)
+              
+              break
+            }
+          }
+        }
+        
+        if (!found) {
+          console.log('근거 텍스트를 찾을 수 없습니다:', targetHighlightInfo.evidence)
+        }
+      }, 500) // DOM 렌더링 완료 대기
+      
+      return () => clearTimeout(timer)
+    }
+  }, [targetHighlightInfo, getTextNodes])
 
           // 기존 하이라이트를 DOM에서 제거하는 함수
   const clearExistingHighlights = useCallback(() => {

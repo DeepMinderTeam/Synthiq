@@ -22,9 +22,11 @@ interface PaperContentProps {
   paperId: string
   topicId: string
   isCollapsed?: boolean
+  targetContentId?: number
+  targetHighlightInfo?: { evidence: string; startIndex: number; endIndex: number }
 }
 
-const PaperContent = React.memo(function PaperContent({ paperId, topicId, isCollapsed = false }: PaperContentProps) {
+const PaperContent = React.memo(function PaperContent({ paperId, topicId, isCollapsed = false, targetContentId, targetHighlightInfo }: PaperContentProps) {
   const [contents, setContents] = useState<PaperContentType[]>([])
   const [paper, setPaper] = useState<Paper | null>(null)
   const [paperTitle, setPaperTitle] = useState<string>('')
@@ -81,6 +83,28 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
     fetchContents()
     fetchPaper()
   }, [fetchContents, fetchPaper])
+
+  // targetContentId가 있을 때 해당 페이지로 이동
+  useEffect(() => {
+    if (targetContentId && contents.length > 0) {
+      console.log('타겟 페이지 이동 시도:', { targetContentId, contents: contents.map(c => c.content_id) })
+      
+      // targetContentId가 0이거나 유효하지 않은 경우 첫 번째 페이지로 이동
+      let targetIndex = contents.findIndex(content => content.content_id === targetContentId)
+      
+      if (targetIndex === -1) {
+        console.log('해당 content_id를 찾을 수 없어 첫 번째 페이지로 이동:', targetContentId)
+        targetIndex = 0
+      }
+      
+      if (targetIndex !== -1) {
+        setCurrentPage(targetIndex)
+        // 번역 탭으로 자동 전환
+        setActiveTab('translation')
+        console.log('페이지 이동 완료:', targetIndex)
+      }
+    }
+  }, [targetContentId, contents])
 
   const handleTranslate = useCallback(async () => {
     try {
@@ -290,6 +314,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                       endOffset: h.highlight_end_offset,
                       contentId: h.highlight_content_id?.toString()
                     }))}
+                    targetHighlightInfo={targetHighlightInfo}
                     onNavigateToPage={(contentId) => {
                       // 해당 contentId의 페이지로 이동
                       const targetPageIndex = contents.findIndex(content => content.content_id === parseInt(contentId))

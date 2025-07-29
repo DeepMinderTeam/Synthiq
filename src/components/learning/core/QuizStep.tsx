@@ -8,6 +8,8 @@ import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerati
 
 interface QuizStepProps {
   paperId: string
+  onNavigateToContent?: (contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
+  isTranslationActive?: boolean
 }
 
 // 데이터베이스 타입 정의 (ER 다이어그램 기반)
@@ -77,6 +79,11 @@ interface TestAttemptItem {
   quiz_explanation?: string
   quiz_type?: string
   quiz_category?: string // 카테고리 정보 (선택적)
+  // AI 근거 찾기 관련 필드
+  attempt_item_evidence?: string // AI가 찾은 근거 텍스트
+  attempt_item_evidence_content_id?: number // 근거가 있는 content_id
+  attempt_item_evidence_start_index?: number // 근거 텍스트 시작 위치
+  attempt_item_evidence_end_index?: number // 근거 텍스트 끝 위치
 }
 
 // 타이머 커스텀 훅
@@ -123,7 +130,7 @@ const useTimer = () => {
   return { seconds, isRunning, startTimer, stopTimer, resetTimer, formatTime }
 }
 
-export default function QuizStep({ paperId }: QuizStepProps) {
+export default function QuizStep({ paperId, onNavigateToContent, isTranslationActive = false }: QuizStepProps) {
   const [quizzes, setQuizzes] = useState<PaperQuiz[]>([])
   const [testAttempts, setTestAttempts] = useState<TestAttempt[]>([])
   const [currentAttempt, setCurrentAttempt] = useState<TestAttempt | null>(null)
@@ -407,6 +414,68 @@ export default function QuizStep({ paperId }: QuizStepProps) {
     }
   }
 
+  // 틀린 문제의 근거를 미리 찾는 함수
+  const findEvidenceForWrongAnswer = async (quiz: PaperQuiz): Promise<{
+    evidence?: string
+    contentId?: number
+    startIndex?: number
+    endIndex?: number
+  }> => {
+    try {
+      // 번역이 활성화되어 있지 않으면 근거 찾기 건너뛰기
+      if (!isTranslationActive) {
+        console.log('번역이 비활성화되어 근거 찾기를 건너뜁니다.')
+        return {}
+      }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        console.log('세션이 없어 근거 찾기를 건너뜁니다.')
+        return {}
+      }
+
+      const contentId = quiz.quiz_content_id || 1
+
+      const response = await fetch('/api/find-answer-evidence', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          question: quiz.quiz_question,
+          answer: quiz.quiz_answer,
+          explanation: quiz.quiz_explanation,
+          contentId: contentId
+        }),
+      })
+
+      if (!response.ok) {
+        console.log('근거 찾기 API 호출 실패:', response.status)
+        return {}
+      }
+
+      const result = await response.json()
+      
+      if (result.evidence) {
+        console.log('근거 찾기 성공:', result.evidence.substring(0, 50))
+        return {
+          evidence: result.evidence,
+          contentId: contentId,
+          startIndex: result.startIndex,
+          endIndex: result.endIndex
+        }
+      } else {
+        console.log('근거를 찾을 수 없습니다.')
+        return {}
+      }
+    } catch (error) {
+      console.error('근거 찾기 오류:', error)
+      return {}
+    }
+  }
+
   const submitQuiz = async () => {
     if (!currentAttempt) return
 
@@ -467,6 +536,13 @@ export default function QuizStep({ paperId }: QuizStepProps) {
           explanation = gradingResult.explanation
         }
 
+        // 틀린 문제인 경우 근거를 미리 찾기
+        let evidenceData = {}
+        if (!isCorrect) {
+          console.log('틀린 문제 근거 찾기 시작:', quiz.quiz_question.substring(0, 30))
+          evidenceData = await findEvidenceForWrongAnswer(quiz)
+        }
+
         gradingResults.push({
           attempt_item_attempt_id: actualAttemptId,
           attempt_item_quiz_id: parseInt(quizId),
@@ -474,7 +550,12 @@ export default function QuizStep({ paperId }: QuizStepProps) {
           attempt_is_correct: isCorrect,
           attempt_score: score,
           attempt_feedback: feedback,
-          attempt_explanation: explanation
+          attempt_explanation: explanation,
+          // 근거 정보 추가
+          attempt_item_evidence: evidenceData.evidence,
+          attempt_item_evidence_content_id: evidenceData.contentId,
+          attempt_item_evidence_start_index: evidenceData.startIndex,
+          attempt_item_evidence_end_index: evidenceData.endIndex
         })
       }
 
@@ -901,6 +982,131 @@ export default function QuizStep({ paperId }: QuizStepProps) {
                           <span className="font-semibold text-yellow-800">상세 해설</span>
                         </div>
                         <div className="text-gray-700">{item.attempt_explanation}</div>
+                      </div>
+                    )}
+                    
+                    {/* 틀린 문제의 근거 찾기 버튼 */}
+                    {!item.attempt_is_correct && (
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-lg border border-red-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs">🔍</span>
+                            </div>
+                            <span className="font-semibold text-red-800">틀린 문제 근거 찾기</span>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (!isTranslationActive) {
+                                alert('번역이 활성화되어 있지 않습니다. 번역을 먼저 활성화해주세요.')
+                                return
+                              }
+                              
+                              try {
+                                // 저장된 근거가 있는지 확인
+                                if (item.attempt_item_evidence && item.attempt_item_evidence_content_id) {
+                                  console.log('저장된 근거 사용:', item.attempt_item_evidence.substring(0, 50))
+                                  
+                                  // 저장된 근거로 페이지 이동
+                                  if (onNavigateToContent) {
+                                    onNavigateToContent(item.attempt_item_evidence_content_id, {
+                                      evidence: item.attempt_item_evidence,
+                                      startIndex: item.attempt_item_evidence_start_index || 0,
+                                      endIndex: item.attempt_item_evidence_end_index || 0
+                                    })
+                                  }
+                                } else {
+                                  // 저장된 근거가 없으면 실시간으로 찾기
+                                  console.log('저장된 근거가 없어 실시간으로 찾기 시도')
+                                  
+                                  // 퀴즈 정보 찾기 - attempt_item에서 직접 정보 사용
+                                  let quiz = quizzes.find(q => q.quiz_id === item.attempt_item_quiz_id)
+                                  
+                                  // quizzes에서 찾지 못한 경우 attempt_item의 정보 사용
+                                  if (!quiz && item.quiz_question && item.quiz_answer) {
+                                    quiz = {
+                                      quiz_id: item.attempt_item_quiz_id,
+                                      quiz_content_id: 0, // 기본값
+                                      quiz_type: item.quiz_type || 'multiple_choice',
+                                      quiz_question: item.quiz_question,
+                                      quiz_choices: [],
+                                      quiz_answer: item.quiz_answer,
+                                      quiz_explanation: item.quiz_explanation || item.attempt_explanation || ''
+                                    }
+                                  }
+
+                                  if (!quiz) {
+                                    console.error('퀴즈 정보를 찾을 수 없습니다:', item)
+                                    alert('퀴즈 정보를 찾을 수 없습니다. 퀴즈를 다시 생성해주세요.')
+                                    return
+                                  }
+
+                                  // content_id가 없으면 기본값 사용 (첫 번째 페이지)
+                                  const contentId = quiz.quiz_content_id || 1
+
+                                  // Supabase 클라이언트에서 세션 가져오기
+                                  const { data: { session } } = await supabase.auth.getSession()
+                                  
+                                  if (!session) {
+                                    alert('로그인이 필요합니다.')
+                                    return
+                                  }
+
+                                  // GPT API로 근거 찾기
+                                  const response = await fetch('/api/find-answer-evidence', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${session.access_token}`,
+                                    },
+                                    body: JSON.stringify({
+                                      question: quiz.quiz_question,
+                                      answer: quiz.quiz_answer,
+                                      explanation: quiz.quiz_explanation,
+                                      contentId: contentId
+                                    }),
+                                  })
+
+                                  const result = await response.json()
+                                  
+                                  if (!response.ok) {
+                                    throw new Error(result.error || '근거 찾기에 실패했습니다.')
+                                  }
+
+                                  if (result.evidence) {
+                                    // 근거를 찾았으면 해당 페이지로 이동하고 하이라이트 정보도 전달
+                                    if (onNavigateToContent) {
+                                      onNavigateToContent(contentId, {
+                                        evidence: result.evidence,
+                                        startIndex: result.startIndex,
+                                        endIndex: result.endIndex
+                                      })
+                                    }
+                                  } else {
+                                    alert('이 문제의 근거를 찾을 수 없습니다.')
+                                  }
+                                }
+                              } catch (error) {
+                                console.error('근거 찾기 오류:', error)
+                                alert('근거 찾기에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
+                              }
+                            }}
+                            disabled={!isTranslationActive}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                              isTranslationActive
+                                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl transform hover:scale-105'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                          >
+                            {isTranslationActive ? '🔍 AI 근거 찾기' : '번역 필요'}
+                          </button>
+                        </div>
+                        <div className="text-sm text-red-700 mt-2">
+                          {isTranslationActive 
+                            ? 'AI가 이 문제의 정답 근거를 찾아서 하이라이트로 표시해드립니다.'
+                            : '번역을 활성화하면 AI가 틀린 문제의 근거를 자동으로 찾아줍니다.'
+                          }
+                        </div>
                       </div>
                     )}
                     
