@@ -5,6 +5,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import ReadingStep from './ReadingStep'
 import SummaryStep from './SummaryStep'
 import QuizStep from './QuizStep'
+import WrongAnswerStep from './WrongAnswerStep'
 import StatsStep from '../stats/StatsStep'
 import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerationModal'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -61,6 +62,8 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
         return '논문 요약'
       case 'quiz':
         return '논문 퀴즈'
+      case 'wrong_answer':
+        return '오답노트'
       case 'stats':
         return '논문 통계'
       default:
@@ -303,6 +306,13 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
           <QuizStep 
             paperId={paperId} 
             onNavigateToContent={onNavigateToReadingStep}
+            onShowEvidenceInPaper={onShowEvidenceInPaper}
+            isTranslationActive={isTranslationActive}
+          />
+        )}
+        {currentStep === 'wrong_answer' && (
+          <WrongAnswerStep 
+            paperId={paperId} 
             onShowEvidenceInPaper={onShowEvidenceInPaper}
             isTranslationActive={isTranslationActive}
           />

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type LearningStep = 'reading' | 'summary' | 'quiz' | 'stats'
+export type LearningStep = 'reading' | 'summary' | 'quiz' | 'wrong_answer' | 'stats'
 
 interface PaperStore {
   currentStep: LearningStep

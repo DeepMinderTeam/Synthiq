@@ -83,7 +83,12 @@ export default function Highlighter({
           if (node.parentElement?.classList.contains('highlight')) {
             return NodeFilter.FILTER_REJECT
           }
-          return NodeFilter.FILTER_ACCEPT
+          // ReactMarkdown의 p, div, span 태그 내부의 텍스트만 포함
+          const parent = node.parentElement
+          if (parent && ['P', 'DIV', 'SPAN', 'LI', 'BLOCKQUOTE'].includes(parent.tagName)) {
+            return NodeFilter.FILTER_ACCEPT
+          }
+          return NodeFilter.FILTER_REJECT
         }
       }
     )
@@ -95,6 +100,7 @@ export default function Highlighter({
       }
     }
     
+    console.log('찾은 텍스트 노드 수:', textNodes.length)
     return textNodes
   }, [])
 
@@ -111,9 +117,72 @@ export default function Highlighter({
         const textNodes = getTextNodes(container)
         let found = false
         
+        // 전체 텍스트를 하나로 합쳐서 검색
+        const fullText = textNodes.map(node => node.textContent || '').join(' ')
+        console.log('전체 텍스트 길이:', fullText.length)
+        console.log('전체 텍스트 샘플:', fullText.substring(0, 200) + '...')
+        
         for (const textNode of textNodes) {
           const text = textNode.textContent || ''
-          const index = text.indexOf(targetHighlightInfo.evidence)
+          
+          // 1. 정확한 매칭 시도
+          let index = text.indexOf(targetHighlightInfo.evidence)
+          
+          // 2. 정확한 매칭이 실패하면 공백을 정규화하여 매칭 시도
+          if (index === -1) {
+            const normalizedEvidence = targetHighlightInfo.evidence.replace(/\s+/g, ' ').trim()
+            const normalizedText = text.replace(/\s+/g, ' ').trim()
+            index = normalizedText.indexOf(normalizedEvidence)
+            
+            if (index !== -1) {
+              // 정규화된 텍스트에서 원본 텍스트의 위치를 찾기
+              const beforeNormalized = normalizedText.substring(0, index)
+              const originalBefore = text.substring(0, text.length)
+              let originalIndex = 0
+              let normalizedIndex = 0
+              
+              while (normalizedIndex < beforeNormalized.length && originalIndex < text.length) {
+                if (text[originalIndex].match(/\s/)) {
+                  originalIndex++
+                } else if (beforeNormalized[normalizedIndex] === text[originalIndex]) {
+                  originalIndex++
+                  normalizedIndex++
+                } else {
+                  originalIndex++
+                }
+              }
+              index = originalIndex
+            }
+          }
+          
+          // 3. 여전히 실패하면 부분 매칭 시도 (80% 이상 일치)
+          if (index === -1) {
+            const words = targetHighlightInfo.evidence.split(/\s+/).filter(word => word.length > 2)
+            if (words.length > 0) {
+              let bestMatch = { index: -1, score: 0 }
+              
+              for (let i = 0; i <= text.length - 10; i++) {
+                const substring = text.substring(i, i + targetHighlightInfo.evidence.length + 20)
+                let matchCount = 0
+                
+                for (const word of words) {
+                  if (substring.includes(word)) {
+                    matchCount++
+                  }
+                }
+                
+                const score = matchCount / words.length
+                if (score > bestMatch.score && score >= 0.8) {
+                  bestMatch = { index: i, score }
+                }
+              }
+              
+              if (bestMatch.score >= 0.8) {
+                index = bestMatch.index
+                console.log('부분 매칭 성공:', { score: bestMatch.score, evidence: targetHighlightInfo.evidence })
+              }
+            }
+          }
           
           if (index !== -1) {
             // 근거 텍스트를 하이라이트로 감싸기
@@ -169,8 +238,103 @@ export default function Highlighter({
           }
         }
         
+        // 전체 텍스트에서도 검색 시도
+        if (!found) {
+          console.log('개별 텍스트 노드에서 검색 실패, 전체 텍스트에서 검색 시도...')
+          
+          // 1. 정확한 매칭 시도
+          let fullTextIndex = fullText.indexOf(targetHighlightInfo.evidence)
+          
+          // 2. 정확한 매칭이 실패하면 공백을 정규화하여 매칭 시도
+          if (fullTextIndex === -1) {
+            const normalizedEvidence = targetHighlightInfo.evidence.replace(/\s+/g, ' ').trim()
+            const normalizedFullText = fullText.replace(/\s+/g, ' ').trim()
+            fullTextIndex = normalizedFullText.indexOf(normalizedEvidence)
+          }
+          
+          // 3. 여전히 실패하면 부분 매칭 시도
+          if (fullTextIndex === -1) {
+            const words = targetHighlightInfo.evidence.split(/\s+/).filter(word => word.length > 2)
+            if (words.length > 0) {
+              let bestMatch = { index: -1, score: 0 }
+              
+              for (let i = 0; i <= fullText.length - 10; i++) {
+                const substring = fullText.substring(i, i + targetHighlightInfo.evidence.length + 20)
+                let matchCount = 0
+                
+                for (const word of words) {
+                  if (substring.includes(word)) {
+                    matchCount++
+                  }
+                }
+                
+                const score = matchCount / words.length
+                if (score > bestMatch.score && score >= 0.6) { // 임계값을 0.6으로 낮춤
+                  bestMatch = { index: i, score }
+                }
+              }
+              
+              if (bestMatch.score >= 0.6) {
+                fullTextIndex = bestMatch.index
+                console.log('전체 텍스트에서 부분 매칭 성공:', { score: bestMatch.score, evidence: targetHighlightInfo.evidence })
+              }
+            }
+          }
+          
+          if (fullTextIndex !== -1) {
+            console.log('전체 텍스트에서 근거를 찾았습니다! 위치:', fullTextIndex)
+            // 전체 텍스트에서 찾은 경우, 해당 부분을 하이라이트할 수 있도록 처리
+            // 여기서는 첫 번째 텍스트 노드에 하이라이트를 추가
+            const firstTextNode = textNodes[0]
+            if (firstTextNode) {
+              const span = document.createElement('span')
+              span.className = 'highlight bg-red-200 cursor-pointer'
+              span.setAttribute('data-highlight-id', `evidence-${Date.now()}`)
+              span.textContent = targetHighlightInfo.evidence
+              
+              const parent = firstTextNode.parentNode
+              if (parent) {
+                const text = firstTextNode.textContent || ''
+                const index = text.indexOf(targetHighlightInfo.evidence)
+                if (index !== -1) {
+                  const beforeText = text.substring(0, index)
+                  const afterText = text.substring(index + targetHighlightInfo.evidence.length)
+                  
+                  const fragment = document.createDocumentFragment()
+                  if (beforeText) {
+                    fragment.appendChild(document.createTextNode(beforeText))
+                  }
+                  fragment.appendChild(span)
+                  if (afterText) {
+                    fragment.appendChild(document.createTextNode(afterText))
+                  }
+                  
+                  parent.replaceChild(fragment, firstTextNode)
+                  found = true
+                  
+                  // 하이라이트된 요소로 스크롤
+                  span.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                  })
+                  
+                  // 하이라이트 효과 추가
+                  span.classList.add('ring-2', 'ring-red-400', 'ring-opacity-75')
+                  setTimeout(() => {
+                    span.classList.remove('ring-2', 'ring-red-400', 'ring-opacity-75')
+                  }, 3000)
+                }
+              }
+            }
+          }
+        }
+        
         if (!found) {
           console.log('근거 텍스트를 찾을 수 없습니다:', targetHighlightInfo.evidence)
+          console.log('사용 가능한 텍스트 노드들:', textNodes.map(node => ({
+            text: node.textContent?.substring(0, 100) + '...',
+            length: node.textContent?.length
+          })))
         }
       }, 500) // DOM 렌더링 완료 대기
       

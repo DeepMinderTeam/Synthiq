@@ -542,6 +542,9 @@ export default function QuizStep({ paperId, onNavigateToContent, onShowEvidenceI
         if (!isCorrect) {
           console.log('틀린 문제 근거 찾기 시작:', quiz.quiz_question.substring(0, 30))
           evidenceData = await findEvidenceForWrongAnswer(quiz)
+          
+          // 틀린 문제를 오답노트에 추가 (나중에 attempt_item_id로 추가)
+          console.log('오답노트 추가 예정:', quiz.quiz_question.substring(0, 30))
         }
 
         gradingResults.push({
@@ -561,11 +564,50 @@ export default function QuizStep({ paperId, onNavigateToContent, onShowEvidenceI
       }
 
       // 응시 아이템들 생성
-      const { error: itemsError } = await supabase
+      const { data: insertedItems, error: itemsError } = await supabase
         .from('test_attempt_items')
         .insert(gradingResults)
+        .select()
 
       if (itemsError) throw itemsError
+
+      // 틀린 문제들을 오답노트에 추가
+      if (insertedItems) {
+        console.log('삽입된 아이템들:', insertedItems)
+        for (const item of insertedItems) {
+          if (!item.attempt_is_correct) {
+            console.log('틀린 문제 발견, 오답노트에 추가 시도:', item.attempt_item_id)
+            try {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session?.access_token) {
+                console.error('액세스 토큰이 없습니다.')
+                return
+              }
+
+              const response = await fetch('/api/wrong-answer-notes', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  attemptItemId: item.attempt_item_id
+                }),
+              })
+              
+              if (response.ok) {
+                const result = await response.json()
+                console.log('오답노트에 성공적으로 추가됨:', result)
+              } else {
+                const errorText = await response.text()
+                console.error('오답노트 추가 실패:', response.status, errorText)
+              }
+            } catch (err) {
+              console.error('오답노트 추가 오류:', err)
+            }
+          }
+        }
+      }
 
       // 총점 계산 (개별 점수 기반)
       const totalScore = Math.round(gradingResults.reduce((sum, result) => sum + (result.attempt_score || 0), 0) / gradingResults.length)

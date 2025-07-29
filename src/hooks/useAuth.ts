@@ -14,38 +14,26 @@ export function useAuth() {
 
   const fetchUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      // 먼저 user_id로 시도
-      let { data, error } = await supabase
+      // user 테이블에서 사용자 정보 조회 (single() 대신 maybeSingle() 사용)
+      const { data, error } = await supabase
         .from('user')
         .select('*')
-        .eq('user_id', supabaseUser.id)
-        .single()
-
-      // user_id가 없으면 id로 시도
-      if (error) {
-        console.log('user_id로 조회 실패, id로 재시도:', error.message)
-        const { data: data2, error: error2 } = await supabase
-          .from('user')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single()
-        
-        data = data2
-        error = error2
-      }
+        .eq('id', supabaseUser.id)
+        .maybeSingle()
 
       if (error) {
-        console.error('사용자 프로필을 가져오는 중 오류:', error)
-        // 기본 사용자 정보만 사용
-        return {
-          id: supabaseUser.id,
-          email: supabaseUser.email || '',
-          name: supabaseUser.user_metadata?.name || '사용자',
-          created_at: supabaseUser.created_at
-        }
+        console.log('user 테이블 조회 실패, 기본 정보 사용:', error.message)
+      } else if (!data) {
+        console.log('user 테이블에 해당 사용자가 없음, 기본 정보 사용')
       }
 
-      return data
+      // 데이터가 있으면 사용하고, 없으면 기본 정보 사용
+      return data || {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        name: supabaseUser.user_metadata?.name || '사용자',
+        created_at: supabaseUser.created_at
+      }
     } catch (err) {
       console.error('사용자 프로필 조회 실패:', err)
       return {

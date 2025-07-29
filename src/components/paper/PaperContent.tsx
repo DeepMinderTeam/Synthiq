@@ -34,6 +34,9 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
   const [activeTab, setActiveTab] = useState<'original' | 'translation'>('original')
   const [currentPage, setCurrentPage] = useState(0)
   
+  // 전체 논문 검색 결과를 저장할 상태
+  const [processedTargetHighlightInfo, setProcessedTargetHighlightInfo] = useState<{ evidence: string; startIndex: number; endIndex: number } | undefined>(undefined)
+  
   const { state, startTranslation, completeTranslation } = useAIAnalysis()
   const { isTranslating, messages } = state
 
@@ -86,6 +89,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
 
   // targetContentId가 있을 때 해당 페이지로 이동
   useEffect(() => {
+    console.log('PaperContent targetContentId 변경됨:', targetContentId)
     if (targetContentId && contents.length > 0) {
       console.log('타겟 페이지 이동 시도:', { targetContentId, contents: contents.map(c => c.content_id) })
       
@@ -106,12 +110,90 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
     }
   }, [targetContentId, contents])
 
-  // targetHighlightInfo가 있을 때 로그 출력
+  // targetHighlightInfo가 있을 때 전체 논문에서 근거 검색
   useEffect(() => {
-    if (targetHighlightInfo) {
+    if (targetHighlightInfo && contents.length > 0) {
       console.log('PaperContent에서 targetHighlightInfo 받음:', targetHighlightInfo)
+      
+      // 전체 논문에서 근거 검색
+      const searchEvidenceInAllPages = async () => {
+        const evidence = targetHighlightInfo.evidence
+        
+        // 모든 페이지의 번역된 텍스트에서 검색
+        for (let i = 0; i < contents.length; i++) {
+          const content = contents[i]
+          if (content.content_text_eng) {
+            const text = content.content_text_eng
+            
+            // 1. 정확한 매칭 시도
+            let index = text.indexOf(evidence)
+            
+            // 2. 정규화된 매칭 시도
+            if (index === -1) {
+              const normalizedEvidence = evidence.replace(/\s+/g, ' ').trim()
+              const normalizedText = text.replace(/\s+/g, ' ').trim()
+              index = normalizedText.indexOf(normalizedEvidence)
+            }
+            
+            // 3. 부분 매칭 시도 (60% 이상 일치)
+            if (index === -1) {
+              const words = evidence.split(/\s+/).filter(word => word.length > 2)
+              if (words.length > 0) {
+                let bestMatch = { index: -1, score: 0 }
+                
+                for (let j = 0; j <= text.length - 10; j++) {
+                  const substring = text.substring(j, j + evidence.length + 20)
+                  let matchCount = 0
+                  
+                  for (const word of words) {
+                    if (substring.includes(word)) {
+                      matchCount++
+                    }
+                  }
+                  
+                  const score = matchCount / words.length
+                  if (score > bestMatch.score && score >= 0.6) {
+                    bestMatch = { index: j, score }
+                  }
+                }
+                
+                if (bestMatch.score >= 0.6) {
+                  index = bestMatch.index
+                  console.log(`페이지 ${i}에서 부분 매칭 성공:`, { score: bestMatch.score, evidence })
+                }
+              }
+            }
+            
+            if (index !== -1) {
+              console.log(`근거를 페이지 ${i}에서 찾았습니다! content_id: ${content.content_id}`)
+              
+              // 해당 페이지로 이동
+              setCurrentPage(i)
+              setActiveTab('translation')
+              
+              // 처리된 targetHighlightInfo 설정 (Highlighter에 전달할 용도)
+              setProcessedTargetHighlightInfo({
+                evidence: targetHighlightInfo.evidence,
+                startIndex: index,
+                endIndex: index + targetHighlightInfo.evidence.length
+              })
+              
+              return
+            }
+          }
+        }
+        
+        console.log('전체 논문에서 근거를 찾을 수 없습니다:', evidence)
+        // 찾지 못한 경우에도 processedTargetHighlightInfo 설정 (Highlighter에서 처리)
+        setProcessedTargetHighlightInfo(targetHighlightInfo)
+      }
+      
+      searchEvidenceInAllPages()
+    } else {
+      // targetHighlightInfo가 없으면 processedTargetHighlightInfo도 초기화
+      setProcessedTargetHighlightInfo(undefined)
     }
-  }, [targetHighlightInfo])
+  }, [targetHighlightInfo, contents])
 
   const handleTranslate = useCallback(async () => {
     try {
@@ -321,7 +403,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                       endOffset: h.highlight_end_offset,
                       contentId: h.highlight_content_id?.toString()
                     }))}
-                    targetHighlightInfo={targetHighlightInfo}
+                    targetHighlightInfo={processedTargetHighlightInfo}
                     onNavigateToPage={(contentId) => {
                       // 해당 contentId의 페이지로 이동
                       const targetPageIndex = contents.findIndex(content => content.content_id === parseInt(contentId))

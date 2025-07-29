@@ -15,6 +15,7 @@ const steps: { key: LearningStep; label: string }[] = [
   { key: 'reading', label: '논문 읽기' },
   { key: 'summary', label: '논문 요약' },
   { key: 'quiz', label: '논문 퀴즈' },
+  { key: 'wrong_answer', label: '오답노트' },
   { key: 'stats', label: '논문 통계' }
 ]
 
