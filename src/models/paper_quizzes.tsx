@@ -8,4 +8,8 @@ export interface PaperQuiz {
   quiz_answer: string; // 정답
   quiz_explanation?: string; // 해설
   quiz_category?: string; // 퀴즈 카테고리(예: 개념 이해, 원리 및 구조 등)
+  // 근거 관련 필드 추가
+  quiz_evidence?: string; // 퀴즈 정답의 근거 텍스트
+  quiz_evidence_start_index?: number; // 근거 텍스트 시작 위치
+  quiz_evidence_end_index?: number; // 근거 텍스트 끝 위치
 } 
