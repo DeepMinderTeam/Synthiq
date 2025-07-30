@@ -563,8 +563,8 @@ export default function QuizStep({ paperId, onNavigateToContent, onShowEvidenceI
             evidenceData = {
               evidence: quiz.quiz_evidence,
               contentId: quiz.quiz_content_id,
-              startIndex: quiz.quiz_evidence_start_index || null,
-              endIndex: quiz.quiz_evidence_end_index || null
+              startIndex: quiz.quiz_evidence_start_index || undefined,
+              endIndex: quiz.quiz_evidence_end_index || undefined
             }
           } else {
             // 저장된 근거가 없으면 실시간으로 찾기
@@ -1082,8 +1082,8 @@ export default function QuizStep({ paperId, onNavigateToContent, onShowEvidenceI
                                   if (onShowEvidenceInPaper) {
                                     onShowEvidenceInPaper(item.quiz_content_id || 1, {
                                       evidence: item.quiz_evidence,
-                                      startIndex: item.quiz_evidence_start_index || null,
-                                      endIndex: item.quiz_evidence_end_index || null
+                                      startIndex: (item.quiz_evidence_start_index as number) || 0,
+                                      endIndex: (item.quiz_evidence_end_index as number) || 0
                                     })
                                     console.log('저장된 근거 onShowEvidenceInPaper 호출 완료')
                                   } else {
