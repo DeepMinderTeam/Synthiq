@@ -104,6 +104,8 @@ export default function Highlighter({
     return textNodes
   }, [])
 
+
+
   // targetHighlightInfo가 있을 때 해당 텍스트를 자동으로 하이라이트
   useEffect(() => {
     if (targetHighlightInfo && targetHighlightInfo.evidence && containerRef.current) {
@@ -342,7 +344,34 @@ export default function Highlighter({
     }
   }, [targetHighlightInfo, getTextNodes])
 
-          // 기존 하이라이트를 DOM에서 제거하는 함수 (필요한 경우에만 사용)
+  // 하이라이트 제거
+  const removeHighlight = useCallback(async (highlightId: string | number) => {
+    try {
+      // 데이터베이스에서 하이라이트 삭제
+      if (onDeleteHighlight) {
+        await onDeleteHighlight(highlightId.toString())
+      }
+
+      // DOM에서 하이라이트 제거
+      const highlightElement = containerRef.current?.querySelector(`[data-highlight-id="${highlightId.toString()}"]`)
+      if (highlightElement && highlightElement.parentNode) {
+        const textNode = document.createTextNode(highlightElement.textContent || '')
+        highlightElement.parentNode.replaceChild(textNode, highlightElement)
+      }
+
+      // 상태에서 하이라이트 제거
+      setHighlights(prev => {
+        const newHighlights = prev.filter(h => h.id !== highlightId)
+        console.log('하이라이트 제거됨:', highlightId, '남은 하이라이트:', newHighlights.length)
+        return newHighlights
+      })
+    } catch (error) {
+      console.error('하이라이트 삭제 오류:', error)
+      alert('하이라이트 삭제에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
+    }
+  }, [onDeleteHighlight])
+
+  // 기존 하이라이트를 DOM에서 제거하는 함수 (필요한 경우에만 사용)
   const clearExistingHighlights = useCallback(() => {
     if (!containerRef.current) return
 
@@ -437,7 +466,7 @@ export default function Highlighter({
         }
       }
     })
-  }, [getTextNodes])
+  }, [getTextNodes, removeHighlight])
 
   // 하이라이트 변경 시 콜백 호출 (자동 저장 비활성화)
   // useEffect(() => {
@@ -545,34 +574,7 @@ export default function Highlighter({
     
     // 선택 해제
     selection.removeAllRanges()
-  }, [])
-
-  // 하이라이트 제거
-  const removeHighlight = useCallback(async (highlightId: string | number) => {
-    try {
-      // 데이터베이스에서 하이라이트 삭제
-      if (onDeleteHighlight) {
-        await onDeleteHighlight(highlightId.toString())
-      }
-
-      // DOM에서 하이라이트 제거
-      const highlightElement = containerRef.current?.querySelector(`[data-highlight-id="${highlightId.toString()}"]`)
-      if (highlightElement && highlightElement.parentNode) {
-        const textNode = document.createTextNode(highlightElement.textContent || '')
-        highlightElement.parentNode.replaceChild(textNode, highlightElement)
-      }
-
-      // 상태에서 하이라이트 제거
-      setHighlights(prev => {
-        const newHighlights = prev.filter(h => h.id !== highlightId)
-        console.log('하이라이트 제거됨:', highlightId, '남은 하이라이트:', newHighlights.length)
-        return newHighlights
-      })
-    } catch (error) {
-      console.error('하이라이트 삭제 오류:', error)
-      alert('하이라이트 삭제에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
-    }
-  }, [onDeleteHighlight])
+  }, [removeHighlight])
 
   // 하이라이트 우클릭 시 삭제
   const handleHighlightContextMenu = useCallback((e: React.MouseEvent, highlightId: string | number) => {
