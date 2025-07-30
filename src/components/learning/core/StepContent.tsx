@@ -5,6 +5,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import ReadingStep from './ReadingStep'
 import SummaryStep from './SummaryStep'
 import QuizStep from './QuizStep'
+import WrongAnswerStep from './WrongAnswerStep'
 import StatsStep from '../stats/StatsStep'
 import QuizGenerationModal, { QuizGenerationOptions } from '../quiz/QuizGenerationModal'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -18,12 +19,15 @@ interface StepContentProps {
   topicId: string
   isPaperContentCollapsed?: boolean
   onTogglePaperContent?: () => void
+  onNavigateToReadingStep?: (contentId?: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
+  onShowEvidenceInPaper?: (contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => void
 }
 
-const StepContent = React.memo(function StepContent({ currentStep, paperId, topicId, isPaperContentCollapsed, onTogglePaperContent }: StepContentProps) {
+const StepContent = React.memo(function StepContent({ currentStep, paperId, topicId, isPaperContentCollapsed, onTogglePaperContent, onNavigateToReadingStep, onShowEvidenceInPaper }: StepContentProps) {
   const [activeTab, setActiveTab] = useState<'ai' | 'self'>('ai')
   const [showQuizModal, setShowQuizModal] = useState(false)
   const [paperTitle, setPaperTitle] = useState<string>('')
+  const [isTranslationActive, setIsTranslationActive] = useState(false)
   const { state, startSummaryGeneration, startQuizGeneration, completeSummaryGeneration, completeQuizGeneration } = useAIAnalysis()
   const { isGeneratingSummary, isGeneratingQuiz } = state
 
@@ -58,12 +62,48 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
         return '논문 요약'
       case 'quiz':
         return '논문 퀴즈'
+      case 'wrong_answer':
+        return '오답노트'
       case 'stats':
         return '논문 통계'
       default:
         return ''
     }
   }, [currentStep])
+
+  // 번역 활성화 상태 확인
+  const checkTranslationStatus = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('paper_contents')
+        .select('content_text_eng')
+        .eq('content_paper_id', paperId)
+        .not('content_text_eng', 'is', null)
+        .limit(1)
+
+      if (!error && data && data.length > 0) {
+        setIsTranslationActive(true)
+      } else {
+        setIsTranslationActive(false)
+      }
+    } catch (err) {
+      console.error('번역 상태 확인 오류:', err)
+      setIsTranslationActive(false)
+    }
+  }, [paperId])
+
+  // 번역 상태 확인
+  useEffect(() => {
+    checkTranslationStatus()
+  }, [checkTranslationStatus])
+
+  // 퀴즈에서 틀린 문제의 근거로 이동
+  const handleNavigateToContent = useCallback((contentId: number, highlightInfo?: { evidence: string; startIndex: number; endIndex: number }) => {
+    console.log('퀴즈에서 틀린 문제의 근거로 이동:', contentId, highlightInfo)
+    if (onNavigateToReadingStep) {
+      onNavigateToReadingStep(contentId, highlightInfo)
+    }
+  }, [onNavigateToReadingStep])
 
   const handleGenerateQuiz = useCallback(async (options: QuizGenerationOptions) => {
     try {
@@ -262,7 +302,21 @@ const StepContent = React.memo(function StepContent({ currentStep, paperId, topi
       </div>
       <div className="flex-1 p-6 overflow-hidden">
         {currentStep === 'summary' && <SummaryStep paperId={paperId} activeTab={activeTab} />}
-        {currentStep === 'quiz' && <QuizStep paperId={paperId} />}
+                               {currentStep === 'quiz' && (
+          <QuizStep 
+            paperId={paperId} 
+            onNavigateToContent={onNavigateToReadingStep}
+            onShowEvidenceInPaper={onShowEvidenceInPaper}
+            isTranslationActive={isTranslationActive}
+          />
+        )}
+        {currentStep === 'wrong_answer' && (
+          <WrongAnswerStep 
+            paperId={paperId} 
+            onShowEvidenceInPaper={onShowEvidenceInPaper}
+            isTranslationActive={isTranslationActive}
+          />
+        )}
         {currentStep === 'stats' && <StatsStep paperId={paperId} />}
       </div>
 

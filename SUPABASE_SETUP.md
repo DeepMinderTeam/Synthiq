@@ -146,6 +146,20 @@ WHERE quiz_category IS NULL;
 COMMENT ON COLUMN paper_quizzes.quiz_category IS '퀴즈 카테고리 (예: 개념 이해, 원리 및 구조, 실험 및 결과 등)';
 ```
 
+#### paper_quizzes 테이블에 근거 관련 열 추가
+```sql
+-- paper_quizzes 테이블에 근거 관련 열 추가
+ALTER TABLE paper_quizzes 
+ADD COLUMN quiz_evidence TEXT,
+ADD COLUMN quiz_evidence_start_index INTEGER,
+ADD COLUMN quiz_evidence_end_index INTEGER;
+
+-- 열에 대한 설명 추가
+COMMENT ON COLUMN paper_quizzes.quiz_evidence IS '퀴즈 정답의 근거가 되는 논문 텍스트';
+COMMENT ON COLUMN paper_quizzes.quiz_evidence_start_index IS '근거 텍스트의 시작 위치 (문자 인덱스)';
+COMMENT ON COLUMN paper_quizzes.quiz_evidence_end_index IS '근거 텍스트의 끝 위치 (문자 인덱스)';
+```
+
 ### 기존 테이블 구조
 
 #### paper_quizzes 테이블
@@ -231,3 +245,163 @@ const { data: quizzes } = await supabase
   .select('*')
   .eq('quiz_category', '개념 이해');
 ``` 
+
+# Supabase 설정 가이드
+
+## 데이터베이스 테이블 생성
+
+### 1. 사용자 테이블 (users)
+```sql
+CREATE TABLE users (
+  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_email VARCHAR(255) UNIQUE NOT NULL,
+  user_name VARCHAR(100),
+  user_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  user_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 2. 주제 테이블 (topics)
+```sql
+CREATE TABLE topics (
+  topic_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  topic_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  topic_title VARCHAR(255) NOT NULL,
+  topic_description TEXT,
+  topic_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  topic_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 3. 논문 테이블 (paper)
+```sql
+CREATE TABLE paper (
+  paper_id SERIAL PRIMARY KEY,
+  paper_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  paper_topic_id UUID REFERENCES topics(topic_id) ON DELETE CASCADE,
+  paper_title VARCHAR(500) NOT NULL,
+  paper_abstract TEXT,
+  paper_url TEXT,
+  paper_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  paper_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 4. 논문 내용 테이블 (paper_contents)
+```sql
+CREATE TABLE paper_contents (
+  content_id SERIAL PRIMARY KEY,
+  content_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  content_type VARCHAR(100),
+  content_index INTEGER NOT NULL,
+  content_text TEXT NOT NULL,
+  content_text_eng TEXT,
+  content_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  content_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 5. 논문 하이라이트 테이블 (paper_highlights)
+```sql
+CREATE TABLE paper_highlights (
+  highlight_id SERIAL PRIMARY KEY,
+  highlight_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  highlight_content_id INTEGER REFERENCES paper_contents(content_id) ON DELETE CASCADE,
+  highlight_page_id VARCHAR(100),
+  highlight_text TEXT NOT NULL,
+  highlight_color VARCHAR(50) NOT NULL,
+  highlight_start_offset INTEGER NOT NULL,
+  highlight_end_offset INTEGER NOT NULL,
+  highlight_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  highlight_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  highlight_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 6. 논문 요약 테이블 (paper_summaries)
+```sql
+CREATE TABLE paper_summaries (
+  summary_id SERIAL PRIMARY KEY,
+  summary_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  summary_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  summary_type VARCHAR(50) NOT NULL, -- 'ai' or 'self'
+  summary_content TEXT NOT NULL,
+  summary_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  summary_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 7. 논문 퀴즈 테이블 (paper_quizzes)
+```sql
+CREATE TABLE paper_quizzes (
+  quiz_id SERIAL PRIMARY KEY,
+  quiz_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  quiz_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  quiz_title VARCHAR(255),
+  quiz_description TEXT,
+  quiz_options JSONB, -- 퀴즈 생성 옵션 저장
+  quiz_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  quiz_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 8. 퀴즈 문제 테이블 (paper_test_items)
+```sql
+CREATE TABLE paper_test_items (
+  test_item_id SERIAL PRIMARY KEY,
+  test_item_quiz_id INTEGER REFERENCES paper_quizzes(quiz_id) ON DELETE CASCADE,
+  test_item_question TEXT NOT NULL,
+  test_item_type VARCHAR(50) NOT NULL, -- 'multiple_choice', 'ox_quiz', 'short_answer', 'essay'
+  test_item_options JSONB, -- 객관식 보기들
+  test_item_answer TEXT NOT NULL,
+  test_item_explanation TEXT,
+  test_item_difficulty VARCHAR(20), -- 'easy', 'medium', 'hard'
+  test_item_category VARCHAR(100),
+  test_item_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 9. 퀴즈 시도 테이블 (test_attempts)
+```sql
+CREATE TABLE test_attempts (
+  attempt_id SERIAL PRIMARY KEY,
+  attempt_quiz_id INTEGER REFERENCES paper_quizzes(quiz_id) ON DELETE CASCADE,
+  attempt_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  attempt_started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  attempt_completed_at TIMESTAMP WITH TIME ZONE,
+  attempt_score INTEGER,
+  attempt_total_questions INTEGER,
+  attempt_correct_answers INTEGER
+);
+```
+
+### 10. 퀴즈 답안 테이블 (test_attempt_items)
+```sql
+CREATE TABLE test_attempt_items (
+  attempt_item_id SERIAL PRIMARY KEY,
+  attempt_item_attempt_id INTEGER REFERENCES test_attempts(attempt_id) ON DELETE CASCADE,
+  attempt_item_test_item_id INTEGER REFERENCES paper_test_items(test_item_id) ON DELETE CASCADE,
+  attempt_item_user_answer TEXT,
+  attempt_item_is_correct BOOLEAN,
+  attempt_item_points INTEGER,
+  attempt_item_answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- AI 근거 찾기 관련 컬럼 추가
+  attempt_item_evidence TEXT, -- AI가 찾은 근거 텍스트
+  attempt_item_evidence_content_id INTEGER, -- 근거가 있는 content_id
+  attempt_item_evidence_start_index INTEGER, -- 근거 텍스트 시작 위치
+  attempt_item_evidence_end_index INTEGER -- 근거 텍스트 끝 위치
+);
+```
+
+### 11. 최근 조회 테이블 (paper_recent_views)
+```sql
+CREATE TABLE paper_recent_views (
+  view_id SERIAL PRIMARY KEY,
+  view_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
+  view_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+  view_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 12. 주제 최근 조회 테이블 (topic_recent_views)
+```

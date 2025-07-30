@@ -56,7 +56,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Synthiq
           </h1>
-          <p className="text-gray-600 mt-2">논문 학습을 더 스마트하게</p>
+          <p className="text-gray-600 mt-2">생성형 AI를 활용한 메타인지 학습 플랫폼</p>
         </div>
 
         {/* 로그인 폼 */}
