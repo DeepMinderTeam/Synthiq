@@ -35,6 +35,7 @@ const config: Config = {
     },
   },
   plugins: [
+    require('@tailwindcss/typography'),
     function({ addUtilities }: any) {
       const newUtilities = {
         '.custom-scrollbar': {
