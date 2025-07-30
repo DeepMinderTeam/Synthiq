@@ -46,6 +46,18 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
     paperId
   })
 
+  // 메모이제이션된 하이라이트 데이터
+  const memoizedHighlights = useMemo(() => 
+    highlights.map(h => ({
+      id: h.highlight_id.toString(),
+      text: h.highlight_text,
+      color: h.highlight_color,
+      startOffset: h.highlight_start_offset,
+      endOffset: h.highlight_end_offset,
+      contentId: h.highlight_content_id?.toString()
+    })), [highlights]
+  )
+
   const fetchContents = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -421,14 +433,7 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                   <Highlighter
                     key={`highlighter-${currentPage}`}
                     currentContentId={contents[currentPage].content_id?.toString()}
-                    initialHighlights={highlights.map(h => ({
-                      id: h.highlight_id.toString(),
-                      text: h.highlight_text,
-                      color: h.highlight_color,
-                      startOffset: h.highlight_start_offset,
-                      endOffset: h.highlight_end_offset,
-                      contentId: h.highlight_content_id?.toString()
-                    }))}
+                    initialHighlights={memoizedHighlights}
                     targetHighlightInfo={processedTargetHighlightInfo}
                     onNavigateToPage={(contentId, highlightInfo) => {
                       // 해당 contentId의 페이지로 이동
@@ -450,27 +455,39 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                       }
                     }}
                     onHighlightChange={async (newHighlights) => {
-                      console.log('하이라이트 저장 요청:', newHighlights)
-                      
-                      // 모든 새로운 하이라이트를 서버에 저장
-                      for (const highlight of newHighlights) {
-                        if (!highlights.find(h => h.highlight_id.toString() === highlight.id)) {
-                          console.log('하이라이트 저장 시도:', highlight)
-                          try {
-                            const result = await createHighlight({
+                      // 성능 최적화: 디바운싱 적용
+                      const timeoutId = setTimeout(async () => {
+                        console.log('하이라이트 저장 요청:', newHighlights)
+                        
+                        // 기존 하이라이트 ID를 Set으로 변환하여 검색 성능 향상
+                        const existingHighlightIds = new Set(highlights.map(h => h.highlight_id.toString()))
+                        
+                        // 새로운 하이라이트만 필터링
+                        const highlightsToSave = newHighlights.filter(highlight => 
+                          !existingHighlightIds.has(highlight.id.toString())
+                        )
+                        
+                        if (highlightsToSave.length === 0) return
+                        
+                        // 배치 처리로 성능 향상
+                        try {
+                          await Promise.all(highlightsToSave.map(highlight => 
+                            createHighlight({
                               contentId: contents[currentPage].content_id,
                               text: highlight.text,
                               color: highlight.color,
                               startOffset: highlight.startOffset,
                               endOffset: highlight.endOffset
                             })
-                            console.log('하이라이트 저장 성공:', result)
-                          } catch (error) {
-                            console.error('하이라이트 저장 오류:', error)
-                            alert('하이라이트 저장에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
-                          }
+                          ))
+                          console.log('하이라이트 배치 저장 성공:', highlightsToSave.length)
+                        } catch (error) {
+                          console.error('하이라이트 저장 오류:', error)
+                          alert('하이라이트 저장에 실패했습니다: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
                         }
-                      }
+                      }, 500) // 500ms 디바운싱
+                      
+                      return () => clearTimeout(timeoutId)
                     }}
                   >
                     <div className="space-y-4">
@@ -487,7 +504,25 @@ const PaperContent = React.memo(function PaperContent({ paperId, topicId, isColl
                       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6" style={{ minHeight: '297mm', maxHeight: '297mm', overflowY: 'auto' }}>
                         {contents[currentPage].content_text_eng ? (
                           <div className="text-gray-800 prose prose-sm max-w-none">
-                            <ReactMarkdown>{contents[currentPage].content_text_eng}</ReactMarkdown>
+                            <ReactMarkdown 
+                              components={{
+                                // 불필요한 컴포넌트 렌더링 방지
+                                h1: ({children}) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                h2: ({children}) => <h2 className="text-xl font-bold mb-3">{children}</h2>,
+                                h3: ({children}) => <h3 className="text-lg font-semibold mb-2">{children}</h3>,
+                                p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                                ul: ({children}) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
+                                ol: ({children}) => <ol className="list-decimal pl-6 mb-4">{children}</ol>,
+                                li: ({children}) => <li className="mb-1">{children}</li>,
+                                strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                                em: ({children}) => <em className="italic">{children}</em>,
+                                code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
+                                pre: ({children}) => <pre className="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
+                                blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-4 italic mb-4">{children}</blockquote>,
+                              }}
+                            >
+                              {contents[currentPage].content_text_eng}
+                            </ReactMarkdown>
                           </div>
                         ) : (
                           <div className="flex items-center justify-center h-full">

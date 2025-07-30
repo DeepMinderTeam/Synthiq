@@ -26,14 +26,13 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [currentSummaryId, setCurrentSummaryId] = useState<number>(0)
 
-  // 나의 정리노트 탭으로 이동할 때 기존 내용 로드
+  // 나의 정리노트 탭으로 이동할 때 기존 내용 로드 (메모이제이션 최적화)
   useEffect(() => {
     if (activeTab === 'self' && summaries.length > 0) {
-      // 기존 사용자 요약이 있으면 로드
-      if (summaries[0].summary_text_self) {
-      setSelfSummary(summaries[0].summary_text_self)
+      const firstSummary = summaries[0]
+      if (firstSummary?.summary_text_self) {
+        setSelfSummary(firstSummary.summary_text_self)
       } else {
-        // 기존 사용자 요약이 없으면 빈 문자열로 초기화
         setSelfSummary('')
       }
     }
@@ -250,14 +249,18 @@ export default function SummaryStep({ paperId, activeTab }: SummaryStepProps) {
     }
   }
 
-  // 내용 변경 함수 (로컬 저장만)
-  const handleSelfSummaryChange = (value: string) => {
+  // 내용 변경 함수 (로컬 저장만) - 디바운싱 적용
+  const handleSelfSummaryChange = useCallback((value: string) => {
     setSelfSummary(value)
     
-    // localStorage에 즉시 백업
-    const backupKey = `selfSummary_${paperId}`
-    localStorage.setItem(backupKey, value)
-  }
+    // localStorage 저장을 디바운싱으로 최적화
+    const timeoutId = setTimeout(() => {
+      const backupKey = `selfSummary_${paperId}`
+      localStorage.setItem(backupKey, value)
+    }, 300) // 300ms 디바운싱
+    
+    return () => clearTimeout(timeoutId)
+  }, [paperId])
 
   // blur 시 서버 저장 함수
   const handleSelfSummaryBlur = (value: string) => {

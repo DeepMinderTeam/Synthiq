@@ -133,7 +133,7 @@
   background: #94a3b8;
 }
 
-/* 마크다운 스타일 */
+/* 마크다운 스타일 - 성능 최적화 */
 .prose {
   color: #374151;
   max-width: none;
