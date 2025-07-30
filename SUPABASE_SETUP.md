@@ -146,6 +146,20 @@ WHERE quiz_category IS NULL;
 COMMENT ON COLUMN paper_quizzes.quiz_category IS '퀴즈 카테고리 (예: 개념 이해, 원리 및 구조, 실험 및 결과 등)';
 ```
 
+#### paper_quizzes 테이블에 근거 관련 열 추가
+```sql
+-- paper_quizzes 테이블에 근거 관련 열 추가
+ALTER TABLE paper_quizzes 
+ADD COLUMN quiz_evidence TEXT,
+ADD COLUMN quiz_evidence_start_index INTEGER,
+ADD COLUMN quiz_evidence_end_index INTEGER;
+
+-- 열에 대한 설명 추가
+COMMENT ON COLUMN paper_quizzes.quiz_evidence IS '퀴즈 정답의 근거가 되는 논문 텍스트';
+COMMENT ON COLUMN paper_quizzes.quiz_evidence_start_index IS '근거 텍스트의 시작 위치 (문자 인덱스)';
+COMMENT ON COLUMN paper_quizzes.quiz_evidence_end_index IS '근거 텍스트의 끝 위치 (문자 인덱스)';
+```
+
 ### 기존 테이블 구조
 
 #### paper_quizzes 테이블
@@ -390,168 +404,4 @@ CREATE TABLE paper_recent_views (
 ```
 
 ### 12. 주제 최근 조회 테이블 (topic_recent_views)
-```sql
-CREATE TABLE topic_recent_views (
-  view_id SERIAL PRIMARY KEY,
-  view_topic_id UUID REFERENCES topics(topic_id) ON DELETE CASCADE,
-  view_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-  view_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
 ```
-
-### 13. 오답노트 테이블들
-```sql
--- 오답노트 메인 테이블 (test_attempt_items 외래키로 연결)
-CREATE TABLE wrong_answer_notes (
-  note_id SERIAL PRIMARY KEY,
-  note_user_id UUID REFERENCES user(user_id) ON DELETE CASCADE,
-  note_attempt_item_id INTEGER REFERENCES test_attempt_items(attempt_item_id) ON DELETE CASCADE,
-  note_mistake_count INTEGER DEFAULT 1, -- 틀린 횟수
-  note_last_wrong_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(), -- 마지막으로 틀린 날짜
-  note_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  note_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(note_user_id, note_attempt_item_id) -- 사용자당 시도 아이템당 하나의 오답노트만 허용
-);
-
--- 오답노트 학습 기록 테이블
-CREATE TABLE wrong_answer_study_sessions (
-  session_id SERIAL PRIMARY KEY,
-  session_note_id INTEGER REFERENCES wrong_answer_notes(note_id) ON DELETE CASCADE,
-  session_user_id UUID REFERENCES user(user_id) ON DELETE CASCADE,
-  session_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  session_result BOOLEAN NOT NULL, -- 학습 결과 (true: 맞음, false: 틀림)
-  session_answer TEXT, -- 사용자가 입력한 답
-  session_feedback TEXT -- AI 피드백
-);
-```
-
-### 14. 즐겨찾기 테이블들
-```sql
--- 논문 즐겨찾기
-CREATE TABLE paper_favorites (
-  favorite_id SERIAL PRIMARY KEY,
-  favorite_paper_id INTEGER REFERENCES paper(paper_id) ON DELETE CASCADE,
-  favorite_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-  favorite_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(favorite_paper_id, favorite_user_id)
-);
-
--- 주제 즐겨찾기
-CREATE TABLE topic_favorites (
-  favorite_id SERIAL PRIMARY KEY,
-  favorite_topic_id UUID REFERENCES topics(topic_id) ON DELETE CASCADE,
-  favorite_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-  favorite_created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(favorite_topic_id, favorite_user_id)
-);
-```
-
-## 인덱스 생성
-
-```sql
--- 성능 최적화를 위한 인덱스
-CREATE INDEX idx_paper_user_id ON paper(paper_user_id);
-CREATE INDEX idx_paper_topic_id ON paper(paper_topic_id);
-CREATE INDEX idx_paper_contents_paper_id ON paper_contents(content_paper_id);
-CREATE INDEX idx_paper_highlights_paper_id ON paper_highlights(highlight_paper_id);
-CREATE INDEX idx_paper_highlights_content_id ON paper_highlights(highlight_content_id);
-CREATE INDEX idx_paper_highlights_user_id ON paper_highlights(highlight_user_id);
-CREATE INDEX idx_paper_summaries_paper_id ON paper_summaries(summary_paper_id);
-CREATE INDEX idx_paper_quizzes_paper_id ON paper_quizzes(quiz_paper_id);
-CREATE INDEX idx_paper_test_items_quiz_id ON paper_test_items(test_item_quiz_id);
-CREATE INDEX idx_test_attempts_quiz_id ON test_attempts(attempt_quiz_id);
-CREATE INDEX idx_test_attempt_items_attempt_id ON test_attempt_items(attempt_item_attempt_id);
-CREATE INDEX idx_paper_recent_views_user_id ON paper_recent_views(view_user_id);
-CREATE INDEX idx_topic_recent_views_user_id ON topic_recent_views(view_user_id);
-CREATE INDEX idx_wrong_answer_notes_user_id ON wrong_answer_notes(note_user_id);
-CREATE INDEX idx_wrong_answer_notes_attempt_item_id ON wrong_answer_notes(note_attempt_item_id);
-CREATE INDEX idx_wrong_answer_notes_user_attempt ON wrong_answer_notes(note_user_id, note_attempt_item_id);
-CREATE INDEX idx_wrong_answer_study_sessions_note_id ON wrong_answer_study_sessions(session_note_id);
-CREATE INDEX idx_wrong_answer_study_sessions_user_id ON wrong_answer_study_sessions(session_user_id);
-```
-
-## RLS (Row Level Security) 정책
-
-```sql
--- 모든 테이블에 RLS 활성화
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE topics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_contents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_highlights ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_summaries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_quizzes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_test_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE test_attempts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE test_attempt_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_recent_views ENABLE ROW LEVEL SECURITY;
-ALTER TABLE topic_recent_views ENABLE ROW LEVEL SECURITY;
-ALTER TABLE paper_favorites ENABLE ROW LEVEL SECURITY;
-ALTER TABLE topic_favorites ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wrong_answer_notes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wrong_answer_study_sessions ENABLE ROW LEVEL SECURITY;
-
--- 사용자 테이블 정책
-CREATE POLICY "Users can view own profile" ON users
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own profile" ON users
-  FOR UPDATE USING (auth.uid() = user_id);
-
--- 주제 테이블 정책
-CREATE POLICY "Users can view own topics" ON topics
-  FOR ALL USING (auth.uid() = topic_user_id);
-
--- 논문 테이블 정책
-CREATE POLICY "Users can view own papers" ON paper
-  FOR ALL USING (auth.uid() = paper_user_id);
-
--- 논문 내용 테이블 정책
-CREATE POLICY "Users can view paper contents" ON paper_contents
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM paper 
-      WHERE paper.paper_id = paper_contents.content_paper_id 
-      AND paper.paper_user_id = auth.uid()
-    )
-  );
-
--- 논문 하이라이트 테이블 정책
-CREATE POLICY "Users can manage own highlights" ON paper_highlights
-  FOR ALL USING (auth.uid() = highlight_user_id);
-
--- 오답노트 테이블 정책
-CREATE POLICY "Users can manage own wrong answer notes" ON wrong_answer_notes
-  FOR ALL USING (auth.uid() = note_user_id);
-
-CREATE POLICY "Users can manage own study sessions" ON wrong_answer_study_sessions
-  FOR ALL USING (auth.uid() = session_user_id);
-
--- 나머지 테이블들도 유사한 정책 적용...
-```
-
-## Storage 버킷 설정
-
-```sql
--- 논문 PDF 파일을 저장할 버킷 생성
-INSERT INTO storage.buckets (id, name, public) VALUES ('papers', 'papers', false);
-
--- Storage 정책 설정
-CREATE POLICY "Users can upload own papers" ON storage.objects
-  FOR INSERT WITH CHECK (
-    bucket_id = 'papers' AND 
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can view own papers" ON storage.objects
-  FOR SELECT USING (
-    bucket_id = 'papers' AND 
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete own papers" ON storage.objects
-  FOR DELETE USING (
-    bucket_id = 'papers' AND 
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-``` 

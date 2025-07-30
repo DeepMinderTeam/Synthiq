@@ -27,6 +27,10 @@ interface GeneratedQuiz {
   quiz_explanation: string
   content_index: number
   quiz_category?: string // 카테고리 정보 추가
+  // 근거 관련 필드 추가
+  quiz_evidence?: string // 퀴즈 정답의 근거 텍스트
+  quiz_evidence_start_index?: number // 근거 텍스트 시작 위치
+  quiz_evidence_end_index?: number // 근거 텍스트 끝 위치
 }
 
 export async function POST(request: NextRequest) {
@@ -218,7 +222,10 @@ ${contents.map((content, index) => `${content.content_index + 1}. [${content.con
     "quiz_answer": "정답",
     "quiz_explanation": "해설",
     "content_index": 0,
-    "quiz_category": "카테고리명"
+    "quiz_category": "카테고리명",
+    "quiz_evidence": "논문에서 정답의 근거가 되는 구체적인 텍스트 (20-100단어)",
+    "quiz_evidence_start_index": -1,
+    "quiz_evidence_end_index": -1
   }
 ]
 
@@ -233,7 +240,8 @@ ${contents.map((content, index) => `${content.content_index + 1}. [${content.con
 - 정답과 해설은 논문 내용을 정확히 반영하세요
 - 선택된 카테고리에 맞는 문제를 생성하세요
 - 선택된 퀴즈 유형만 생성하세요 (선택하지 않은 유형은 생성하지 마세요)
-- quiz_category 필드에는 선택된 카테고리 중 하나를 지정하세요 (예: "개념 이해", "원리 및 구조" 등)`
+- quiz_evidence는 논문 내용에서 정답의 근거가 되는 구체적인 문장이나 구절을 그대로 인용하세요
+- quiz_evidence는 일반적인 설명("이 연구는", "본 논문은" 등)이 아닌 구체적인 내용이어야 합니다`
 
   return prompt
 }
@@ -300,7 +308,10 @@ async function generateQuizzesWithAI(prompt: string, options: any, contents: any
         quiz_answer: quiz.quiz_answer || '',
         quiz_explanation: quiz.quiz_explanation || '',
         content_index: quiz.content_index || (contents[index % contents.length]?.content_index || 0),
-        quiz_category: quiz.quiz_category || 'definition' // 카테고리 정보 추가
+        quiz_category: quiz.quiz_category || 'definition', // 카테고리 정보 추가
+        quiz_evidence: quiz.quiz_evidence || '', // 근거 정보 추가
+        quiz_evidence_start_index: quiz.quiz_evidence_start_index || -1, // 근거 시작 인덱스 추가
+        quiz_evidence_end_index: quiz.quiz_evidence_end_index || -1 // 근거 끝 인덱스 추가
       }))
 
       return validatedQuizzes
@@ -348,7 +359,10 @@ function generateDummyQuizzes(options: any, contents: any[]): GeneratedQuiz[] {
         quiz_answer: "새로운 알고리즘 개발",
         quiz_explanation: "논문의 초록과 서론에서 새로운 알고리즘을 제안한다고 명시되어 있습니다.",
         content_index: contentIndex,
-        quiz_category: "개념 이해"
+        quiz_category: "개념 이해",
+        quiz_evidence: "본 논문에서는 새로운 알고리즘을 제안하여 기존 방법의 한계를 극복하고자 한다.",
+        quiz_evidence_start_index: -1,
+        quiz_evidence_end_index: -1
       })
     } else if (questionType === 'ox_quiz') {
       dummyQuizzes.push({
@@ -358,7 +372,10 @@ function generateDummyQuizzes(options: any, contents: any[]): GeneratedQuiz[] {
         quiz_answer: "참",
         quiz_explanation: "실험 결과에서 제안한 방법이 기존 방법보다 우수한 성능을 보였다고 명시되어 있습니다.",
         content_index: contentIndex,
-        quiz_category: "실험 및 결과"
+        quiz_category: "실험 및 결과",
+        quiz_evidence: "실험 결과에서 제안한 방법이 기존 방법 대비 15%의 성능 향상을 달성하였다.",
+        quiz_evidence_start_index: -1,
+        quiz_evidence_end_index: -1
       })
     } else if (questionType === 'short_answer') {
       dummyQuizzes.push({
@@ -367,7 +384,10 @@ function generateDummyQuizzes(options: any, contents: any[]): GeneratedQuiz[] {
         quiz_answer: "10,000개 샘플",
         quiz_explanation: "실험 섹션에서 총 10,000개의 샘플을 사용했다고 명시되어 있습니다.",
         content_index: contentIndex,
-        quiz_category: "방법론/기술"
+        quiz_category: "방법론/기술",
+        quiz_evidence: "실험에는 총 10,000개의 샘플을 포함하는 대규모 데이터셋을 사용하였다.",
+        quiz_evidence_start_index: -1,
+        quiz_evidence_end_index: -1
       })
     } else if (questionType === 'code_understanding') {
       dummyQuizzes.push({
@@ -376,7 +396,10 @@ function generateDummyQuizzes(options: any, contents: any[]): GeneratedQuiz[] {
         quiz_answer: "O(n log n)",
         quiz_explanation: "알고리즘 분석에서 시간 복잡도가 O(n log n)임을 확인할 수 있습니다.",
         content_index: contentIndex,
-        quiz_category: "원리 및 구조"
+        quiz_category: "원리 및 구조",
+        quiz_evidence: "제안된 알고리즘의 시간 복잡도는 O(n log n)으로 분석되며, 이는 효율적인 처리 성능을 보장한다.",
+        quiz_evidence_start_index: -1,
+        quiz_evidence_end_index: -1
       })
     } else {
       dummyQuizzes.push({
@@ -385,7 +408,10 @@ function generateDummyQuizzes(options: any, contents: any[]): GeneratedQuiz[] {
         quiz_answer: "이 논문에서는 새로운 알고리즘을 제안하고, 10,000개 샘플로 실험하여 15%의 성능 향상을 달성했습니다.",
         quiz_explanation: "방법론에서는 새로운 알고리즘의 구조를 설명하고, 결과에서는 성능 향상 수치를 제시했습니다.",
         content_index: contentIndex,
-        quiz_category: "요약"
+        quiz_category: "요약",
+        quiz_evidence: "새로운 알고리즘을 제안하여 10,000개 샘플로 실험한 결과, 기존 방법 대비 15%의 성능 향상을 달성하였다.",
+        quiz_evidence_start_index: -1,
+        quiz_evidence_end_index: -1
       })
     }
   }
@@ -415,7 +441,10 @@ async function saveQuizzesToDatabase(paperId: string, quizzes: GeneratedQuiz[]) 
           quiz_choices: quiz.quiz_choices || null,
           quiz_answer: quiz.quiz_answer,
           quiz_explanation: quiz.quiz_explanation,
-          quiz_category: quiz.quiz_category || '일반 학습' // 카테고리 정보 추가
+          quiz_category: quiz.quiz_category || '일반 학습', // 카테고리 정보 추가
+          quiz_evidence: quiz.quiz_evidence || null, // 근거 정보 추가
+          quiz_evidence_start_index: quiz.quiz_evidence_start_index || null, // 근거 시작 인덱스 추가
+          quiz_evidence_end_index: quiz.quiz_evidence_end_index || null // 근거 끝 인덱스 추가
         })
         .select()
         .single()
